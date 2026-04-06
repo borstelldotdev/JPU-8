@@ -11,31 +11,31 @@
 #define SYS 0b11000000
 
 ; Register
-#define A{1}   0b000
-#define B{1}   0b001
-#define C{1}   0b010
-#define D{1}   0b011
+#define A{1}   0b00000000
+#define B{1}   0b00001000
+#define C{1}   0b00010000
+#define D{1}   0b00011000
 
-#define XI{1}  0b100
-#define YI{1}  0b101
-#define ZO{1}  0b100
+#define XI{1}  0b00100000
+#define YI{1}  0b00101000
+#define ZO{1}  0b00100000
 
-#define IM{1}  0b101
-#define EX{1}  0b110
-#define MEM{1} 0b111
+#define IM{1}  0b00101000
+#define EX{1}  0b00110000
+#define MEM{1} 0b00111000
 
-#define A{2}   0b000
-#define B{2}   0b001
-#define C{2}   0b010
-#define D{2}   0b011
+#define A{2}   0b00000000
+#define B{2}   0b00000001
+#define C{2}   0b00000010
+#define D{2}   0b00000011
 
-#define XI{2}  0b100
-#define YI{2}  0b101
-#define ZO{2}  0b100
+#define XI{2}  0b00000100
+#define YI{2}  0b00000101
+#define ZO{2}  0b00000100
 
-#define IM{2}  0b101
-#define EX{2}  0b110
-#define MEM{2} 0b111
+#define IM{2}  0b00000101
+#define EX{2}  0b00000110
+#define MEM{2} 0b00000111
 
 
 ; ALU-operationer
@@ -43,17 +43,43 @@
 
 ; Aritmetik
 #define ADD   0b00000000
-#define ADDC  0b00000000
-#define SUB   0b00000000
-#define SUBC  0b00000000
-#define SUBI  0b00000000
-#define SUBIC 0b00000000
+#define ADDC  0b00000100
+#define SUB   0b00010000
+#define SUBC  0b00010100
+#define SUBI  0b00100000
+#define SUBIC 0b00100100
 
 ; Logik
-#define OR   0b00000000
-#define NOR  0b00000000
-#define AND  0b00000000
-#define NAND 0b00000000
+#define OR   0b00001000
+#define NOR  0b00001010
+#define AND  0b00111010
+#define NAND 0b00111000
 
 ; Systeminstruktioner
 
+#define HLT    0b00000000
+#define PAU    0b00000001
+#define R_FLG  0b00000010
+#define S_FLG  0b00000011
+#define JMPA   0b00000100
+#define JMPB   0b00001100
+#define JMPC   0b00010100
+#define JMPD   0b00011100
+#define JMPZ   0b00100100
+#define JMP    0b00101100
+#define JMPMEM 0b00110100
+#define JMPEX  0b00111100
+#define RPTRA  0b00000100
+#define RPTRB  0b00001100
+#define RPTRC  0b00010100
+#define RPTRD  0b00011100
+#define WPTRA  0b00100100
+#define WPTRB  0b00101100
+#define WPTRC  0b00110100
+#define WPTRD  0b00111100
+#define SDEV   0b00111101
+#define NOP    0b00111111
+
+; SDEV-flaggor
+
+# define DEVICE_NUM_DECIMAL 0

@@ -67,15 +67,15 @@ Instruktionslayout:
 |-----------------|----------|--------|----------------------------------------------------|
 | Halt            | HLT      | 000000 | Avsluta programmet                                 |
 | Pause           | PAU      | 000001 | Stäng av den automatiska klockan                   |
-| Reset flag      | RFLG     | 000010 | Sätt flaggan till `0`                              |
-| Set flag        | SFLG     | 000011 | Sätt flaggan till `1`                              |
+| Reset flag      | R_FLG    | 000010 | Sätt flaggan till `0`                              |
+| Set flag        | S_FLG    | 000011 | Sätt flaggan till `1`                              |
 | Jump A          | JMPA     | 000100 | Sätt `PC` till `A`                                 |
 | Jump B          | JMPB     | 001100 | Sätt `PC` till `B`                                 |
 | Jump C          | JMPC     | 010100 | Sätt `PC` till `C`                                 |
 | Jump D          | JMPD     | 011100 | Sätt `PC` till `D`                                 |
 | Jump ZO         | JMPZ     | 100100 | Sätt `PC` till `ZO`                                |
 | Jump            | JMP      | 101100 | Sätt `PC` till `IM`                                |
-| Jump MEM        | JMPM     | 110100 | Sätt `PC` till `MEM[IM]`                           |
+| Jump MEM        | JMPMEM   | 110100 | Sätt `PC` till `MEM[IM]`                           |
 | Jump EX         | JMPEX    | 111100 | Sätt `PC` till `EX` **OSÄKERT!!!**                 |
 | Read Pointer A  | RPTRA    | 000100 | Sätt `ZO` till `MEM[A]`                            |
 | Read Pointer B  | RPTRB    | 001100 | Sätt `ZO` till `MEM[B]`                            |
