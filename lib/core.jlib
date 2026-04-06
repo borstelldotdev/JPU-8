@@ -1,0 +1,59 @@
+; core.jlib
+;
+; Kärnbibliotek
+; Detta bibliotek definerar instruktioner, register och annat
+; Assemblaren OR-ar tokensarna till en instruktion
+;
+
+; Instruktionsklasser
+#define MV  0b00000000
+#define ALU 0b01000000
+#define SYS 0b11000000
+
+; Register
+#define A{1}   0b000
+#define B{1}   0b001
+#define C{1}   0b010
+#define D{1}   0b011
+
+#define XI{1}  0b100
+#define YI{1}  0b101
+#define ZO{1}  0b100
+
+#define IM{1}  0b101
+#define EX{1}  0b110
+#define MEM{1} 0b111
+
+#define A{2}   0b000
+#define B{2}   0b001
+#define C{2}   0b010
+#define D{2}   0b011
+
+#define XI{2}  0b100
+#define YI{2}  0b101
+#define ZO{2}  0b100
+
+#define IM{2}  0b101
+#define EX{2}  0b110
+#define MEM{2} 0b111
+
+
+; ALU-operationer
+#define SET_FLG 0b00000001
+
+; Aritmetik
+#define ADD   0b00000000
+#define ADDC  0b00000000
+#define SUB   0b00000000
+#define SUBC  0b00000000
+#define SUBI  0b00000000
+#define SUBIC 0b00000000
+
+; Logik
+#define OR   0b00000000
+#define NOR  0b00000000
+#define AND  0b00000000
+#define NAND 0b00000000
+
+; Systeminstruktioner
+
