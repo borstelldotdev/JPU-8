@@ -1,5 +1,5 @@
-# include <core.jlib>
-# entrypoint .main
+#include <core.jlib>
+#entrypoint .main
 
 ; XOR-a två inputs
 

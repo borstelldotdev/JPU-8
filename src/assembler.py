@@ -1,3 +1,5 @@
+import os
+
 class Instruction:
     def __init__(self):
         self.unset_code = ""
@@ -36,21 +38,60 @@ class Instruction:
 
         return new
 
+    def compile(self, assembler: Assembler) -> int:
+        s = self._compile(self.set_code, assembler)
+        si = self._compile(self.set_intermediate, assembler) if self.set_intermediate else 0x00
+        u = self._compile(self.unset_code, assembler)
+        ui = self._compile(self.unset_intermediate, assembler) if self.unset_intermediate else 0x00
+
+        return s << 24 | si << 16 | u << 8 | ui
+
+    @staticmethod
+    def _compile(code: str, assembler: Assembler):
+        tokens = code.split(" ")
+        compiled = 0b00000000
+        idx = 0
+        for token in tokens:
+            compiled = compiled | Instruction._parse_token(token, assembler, idx=idx)
+            idx += 1
+
+        return compiled
+
+
+    @staticmethod
+    def _parse_token(token: str, assembler: Assembler, idx=None):
+        if token in assembler.definitions.keys():
+            # Hantera definitionskedjor rekursivt
+            return Instruction._parse_token(assembler.definitions[token], assembler)
+
+        if idx and f"{token}{{{idx}}}" in assembler.definitions.keys():
+            return Instruction._parse_token(assembler.definitions[f"{token}{{{idx}}}"], assembler)
+
+        value = int(token, 0)  # Auto-detektera 20, 0x16, 0b1010, 0o24 osv
+        return value & 0xFF # modda med 256
+
+
     def __repr__(self):
         set_c = self.set_code + (f" [{self.set_intermediate}]" if self.set_intermediate else "")
         unset_c = self.unset_code + (f" [{self.unset_intermediate}]" if self.unset_intermediate else "")
 
-        return (f".{self.flag}" if self.flag else "\t") + \
+        return (f".{self.flag}\n\t" if self.flag else "\t") + \
                (unset_c if unset_c == set_c else f"{unset_c} | {set_c}")
 
 
 
-class Preprocessor:
+class Assembler:
+    BASE_LIB_PATH = "./lib/"
+
     def __init__(self, code: str):
         self.code = code
         self.instructions: list[Instruction] = []
+        self.assembled: list[int] = []
+
         self.definitions = {}
-        self.
+        self.macros = {}
+        self.dependencies: list[str] = []
+        self.entrypoint = None
 
     @classmethod
     def from_file(cls, filename: str):
@@ -59,48 +100,93 @@ class Preprocessor:
             new = cls(data)
         return new
 
-    def tokenize(self):
-        codelines = self.code.split('\n')
+    def assemble(self):
+        self.tokenize(self.code)
+        self.merge()
+        self._assemble_instructions()
+
+    def _tokenize_line(self, line: str):
+        code = line.split(';', maxsplit=1)[0].strip()
+
+        if not code: return
+
+        if code.startswith('#'):
+            self.parse_compiler_annotation(code.split())
+            return
+
+        instruction = Instruction.parse(code)
+        self.instructions.append(instruction)
+
+    def tokenize(self, code):
+        codelines = code.split('\n')
         for line in codelines:
-            if not line: continue
+            self._tokenize_line(line)
 
-            code = line.split(';', maxsplit=1)[0].strip()
+    def merge(self):
+        ptr = 0
+        flg = None
+        while ptr < len(self.instructions):
+            ins = self.instructions[ptr]
+            if ins.flag and not (ins.unset_code or ins.set_code):
+                flg = self.instructions.pop(ptr).flag
+            else:
+                if flg:
+                    ins.flag = flg
+                    flg = None
+                ptr += 1
 
-            if not code: continue
-
-            if code.startswith('#'):
-                self.parse_compiler_annotation(code.split())
-                continue
-
-            instruction = Instruction.parse(code)
-            self.instructions.append(instruction)
-
-
+    def _assemble_instructions(self):
+        for instruction in self.instructions:
+            asm_ = instruction.compile(self)
+            self.assembled.append(asm_)
 
     def parse_compiler_annotation(self, tokens: list[str]):
         match tokens[0].lower():
             case "#include":
-                pass
+                print("Include:", tokens[1])
+                assert len(tokens) == 2
+                lib = tokens[1].lstrip("<").rstrip(">")
+                if lib in self.dependencies: # To prevent recursive inclusions
+                    return
+
+                self.dependencies.append(lib)
+
+                with open(self.BASE_LIB_PATH + lib, "r") as f:
+                    data = f.read()
+
+                self.tokenize(data)
 
             case "#define":
-                pass
+                assert len(tokens) == 3
+                self.definitions[tokens[1]] = tokens[2]
 
             case "#macro":
-                pass
+                # TODO: Implement
+                raise NotImplementedError()
 
             case "#entrypoint":
-                pass
+                assert len(tokens) == 2
+                self.entrypoint = tokens[1]
 
             case "#setup_point":
-                pass
+                # TODO: Implement
+                raise NotImplementedError()
+
+            case "#":
+                raise ValueError(f"No such compiler annotation `#`. Did you add a space? (in {" ".join(tokens)})")
+
+            case _:
+                raise ValueError(f"No such compiler annotation `{tokens[0]}` (in {" ".join(tokens)})")
 
     def __repr__(self):
+        if self.assembled:
+            return "Assembled code: \n" + "\n".join([" ".join([f"{x:032b}"[i:i+8] for i in range(0,32,8)]) for x in self.assembled])
         if self.instructions:
             return "Processed code: \n" + "\n".join([x.__repr__() for x in self.instructions])
-        else:
-            return "Unprocessed code" + self.code
+        return "Unprocessed code" + self.code
 
 if __name__ == "__main__":
-    pre = Preprocessor.from_file("../examples/add.jsm")
-    pre.tokenize()
-    print(pre)
+    os.chdir("..")
+    asm = Assembler.from_file("./examples/add.jsm")
+    asm.assemble()
+    print(asm)

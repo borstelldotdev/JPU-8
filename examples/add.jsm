@@ -1,5 +1,5 @@
-# include <core.jlib>
-# entrypoint .main
+#include <core.jlib>
+#entrypoint .main
 
 ; Addera två tal från användaren
 

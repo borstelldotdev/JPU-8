@@ -82,4 +82,4 @@
 
 ; SDEV-flaggor
 
-# define DEVICE_NUM_DECIMAL 0
+#define DEVICE_NUM_DECIMAL 0
