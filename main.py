@@ -32,13 +32,14 @@ if __name__ == "__main__":
     # Parse arguments
     while arguments:
         arg = arguments.pop(0)
+        print(arg)
 
         # Check for "compound argument" (e.i. -cav) and split it (e.i. -c -a -v)"
         if arg.startswith("-") and (not arg.startswith("--")) and len(arg) > 2:
             args = list(arg.lstrip("-"))
             args.reverse() # Insert at 0 in reversed order to preserve order
             for sub_arg in args:
-                arguments.insert(0, sub_arg)
+                arguments.insert(0, "-" + sub_arg)
             continue
 
 
@@ -80,6 +81,7 @@ if __name__ == "__main__":
 
     # Run
     print(f"JPU-8-utils version {VERSION}")
+    print()
     if not input_file:
         print("ERROR: no input file was given. Please provide a valid input file.")
         exit(-1)
@@ -93,9 +95,10 @@ if __name__ == "__main__":
     for task in tasks:
         match task:
             case ParseableItems.ASSEMBLE:
-                print("Assembling...", end=" ")
+                print(" - Assembling...", end=" ")
                 # TODO: Call assembler
                 print("done")
 
-    print(f"Wrote output to {output_file}")
+    print()
+    print(f"Wrote output to `{output_file}`")
     print("JPU-8-utils done. exiting...")
