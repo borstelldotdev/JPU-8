@@ -1,22 +1,28 @@
 from sys import argv, exit
-from enum import Enum
+from enum import IntEnum
+import logging
+
+from src.assembler import Assembler
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(format='[%(levelname)s]: %(message)s', level=logging.INFO)
 
 VERSION = "1.0"
 
-class ParseableItems(Enum):
+class ParseableItems(IntEnum):
     INPUT_FILE = 1
     OUTPUT_FILE = 2
-    LOG_FILE = 3 # TODO: implement
+    LOG_FILE = 3
 
-    ASSEMBLE = 10
-    COMPILE = 11
+    COMPILE = 10
+    ASSEMBLE = 11
     RUN = 12
 
 if __name__ == "__main__":
     script, arguments = argv[0], argv[1:].copy()
 
     to_parse = [ParseableItems.INPUT_FILE]
-    tasks = []
+    tasks: list[ParseableItems] = []
 
     output_file = "out"
     input_file = None
@@ -26,13 +32,13 @@ if __name__ == "__main__":
     if not arguments:
         print(f"JPU-8 compiler, assembler and simulator version {VERSION}")
         print(f"Usage: python[3] {script} [options] input_file")
+        print(f"Use `python[3] {script} --help` for more information")
         exit(0)
 
 
     # Parse arguments
     while arguments:
-        arg = arguments.pop(0)
-        print(arg)
+        arg = arguments.pop(0).lower()
 
         # Check for "compound argument" (e.i. -cav) and split it (e.i. -c -a -v)"
         if arg.startswith("-") and (not arg.startswith("--")) and len(arg) > 2:
@@ -48,9 +54,6 @@ if __name__ == "__main__":
                 case "-o" | "--out" | "--output" | "--output-file":
                     to_parse.insert(0, ParseableItems.OUTPUT_FILE)
 
-                case "-v" | "--verbose":
-                    verbose = True
-
                 case "-a" | "--assemble":
                     tasks.append(ParseableItems.ASSEMBLE)
 
@@ -65,9 +68,29 @@ if __name__ == "__main__":
                     raise NotImplementedError()
 
                 case "-l" | "--log" | "--log-file":
-                    # TODO: Implement logger
                     to_parse.insert(0, ParseableItems.LOG_FILE)
-                    raise NotImplementedError()
+
+                case "-v" | "--verbose" | "--debug":
+                    logger.setLevel(logging.DEBUG)
+
+                case "--info":
+                    logger.setLevel(logging.INFO)
+
+                case "--warning":
+                    logger.setLevel(logging.WARNING)
+
+                case "--help":
+                    print(f"JPU-8 compiler, assembler and simulator version {VERSION}")
+                    print(f"Usage: python[3] {script} [options] input_file")
+                    print(" -o | --out | --output | --output-file <output_file> : configure the output file path")
+                    print(" -a | --assemble : assemble the file using the assembler")
+                    print(" -r | --run | --run-file | -s | --simulate : run the file with the simulator")
+                    print(" -l | --log | --log-file <output_file> : configure the log file path")
+                    print(" -v | --verbose | --debug : set the logging level to `debug`")
+                    print(" --info : set the logging level to `info` (default)")
+                    print(" --warning : set the logging level to `warning`")
+                    exit(0)
+
 
         else:
             parsing = to_parse.pop(0)
@@ -79,26 +102,48 @@ if __name__ == "__main__":
                 case ParseableItems.OUTPUT_FILE:
                     output_file = arg
 
+                case ParseableItems.LOG_FILE:
+                    logger.addHandler(logging.FileHandler(arg, encoding="utf-8"))
+
     # Run
     print(f"JPU-8-utils version {VERSION}")
     print()
+
+    current = ""
+    tasks = sorted(tasks)
+
     if not input_file:
-        print("ERROR: no input file was given. Please provide a valid input file.")
+        logger.error("ERROR: no input file was given. Please provide a valid input file.")
         exit(-1)
 
     if not tasks:
-        print("ERROR: no tasks were given. Please provide one or more tasks.")
+        logger.error("ERROR: no tasks were given. Please provide one or more tasks.")
         exit(-1)
 
-    print(f"Found {len(tasks)} tasks")
+    with open(input_file, "r") as f:
+        current = f.read()
+
+    logger.info(f"Found {len(tasks)} tasks")
 
     for task in tasks:
         match task:
             case ParseableItems.ASSEMBLE:
-                print(" - Assembling...", end=" ")
-                # TODO: Call assembler
-                print("done")
+                logger.info(" - Assembling...")
+                asm = Assembler(current, logger)
+                current = asm.assemble()
+                logger.info("   done")
+
+            case ParseableItems.RUN:
+                logger.info(" - Running...")
+                # run
+                logger.info("   done")
+
+
+    if current:
+        logger.info(f"Writing output to `{output_file}`")
+        with open(output_file, "w") as f:
+            f.write(current)
+        logger.info("done")
 
     print()
-    print(f"Wrote output to `{output_file}`")
     print("JPU-8-utils done. exiting...")

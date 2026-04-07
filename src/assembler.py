@@ -1,3 +1,4 @@
+import logging
 import os
 
 class Instruction:
@@ -6,17 +7,16 @@ class Instruction:
         self.unset_intermediate = None
         self.set_code = ""
         self.set_intermediate = None
-        self.flag = None
+        self.label = None
 
     @classmethod
-    def parse(cls, code: str, comment: str=""):
+    def parse(cls, code: str):
         new = cls()
-        new.comment = comment
 
         code = code.strip()
         if code.startswith('.'):
             tok_ = code.split(' ', maxsplit=1)
-            new.flag = tok_[0].lower()[1:]
+            new.label = tok_[0].lower()[1:]
             code = tok_[1] if len(tok_) > 1 else ""
 
         if "|" in code:
@@ -67,7 +67,12 @@ class Instruction:
         if idx and f"{token}{{{idx}}}" in assembler.definitions.keys():
             return Instruction._parse_token(assembler.definitions[f"{token}{{{idx}}}"], assembler)
 
-        value = int(token, 0)  # Auto-detektera 20, 0x16, 0b1010, 0o24 osv
+        try:
+            value = int(token, 0)  # Auto-detektera 20, 0x16, 0b1010, 0o24 osv
+        except ValueError:
+            raise ValueError(f"Could not parse `{token}`")
+        except TypeError:
+            raise ValueError(f"Could not parse `{token}`")
         return value & 0xFF # modda med 256
 
 
@@ -75,7 +80,7 @@ class Instruction:
         set_c = self.set_code + (f" [{self.set_intermediate}]" if self.set_intermediate else "")
         unset_c = self.unset_code + (f" [{self.unset_intermediate}]" if self.unset_intermediate else "")
 
-        return (f".{self.flag}\n\t" if self.flag else "\t") + \
+        return (f".{self.label}\n\t" if self.label else "\t") + \
                (unset_c if unset_c == set_c else f"{unset_c} | {set_c}")
 
 
@@ -83,8 +88,9 @@ class Instruction:
 class Assembler:
     BASE_LIB_PATH = "./lib/"
 
-    def __init__(self, code: str):
+    def __init__(self, code: str, logger: logging.Logger):
         self.code = code
+        self.logger = logger
         self.instructions: list[Instruction] = []
         self.assembled: list[int] = []
 
@@ -94,16 +100,28 @@ class Assembler:
         self.entrypoint = None
 
     @classmethod
-    def from_file(cls, filename: str):
+    def from_file(cls, filename: str, logger):
         with open(filename, 'r') as f:
             data = f.read()
-            new = cls(data)
+            new = cls(data, logger)
         return new
 
     def assemble(self):
-        self.tokenize(self.code)
-        self.merge()
-        self._assemble_instructions()
+        if not self.instructions:
+            self.tokenize(self.code)
+            self.merge()
+
+        if not self.assembled:
+
+            if self.entrypoint:
+                self.instructions.append(Instruction.parse(f"SYS JMP {self.entrypoint}"))
+            else:
+                self.logger.warning("No entrypoint configured. Please consider adding a #enerypoint <.label>")
+
+            self.define_labels()
+
+            self._assemble_instructions()
+        return self.asm_to_text()
 
     def _tokenize_line(self, line: str):
         code = line.split(';', maxsplit=1)[0].strip()
@@ -127,13 +145,20 @@ class Assembler:
         flg = None
         while ptr < len(self.instructions):
             ins = self.instructions[ptr]
-            if ins.flag and not (ins.unset_code or ins.set_code):
-                flg = self.instructions.pop(ptr).flag
+            if ins.label and not (ins.unset_code or ins.set_code):
+                flg = self.instructions.pop(ptr).label
             else:
                 if flg:
-                    ins.flag = flg
+                    ins.label = flg
                     flg = None
                 ptr += 1
+
+    def define_labels(self):
+        line = 0
+        for instruction in self.instructions:
+            if instruction.label:
+                self.definitions["." + instruction.label] = str(line)
+            line += 1
 
     def _assemble_instructions(self):
         for instruction in self.instructions:
@@ -143,7 +168,6 @@ class Assembler:
     def parse_compiler_annotation(self, tokens: list[str]):
         match tokens[0].lower():
             case "#include":
-                print("Include:", tokens[1])
                 assert len(tokens) == 2
                 lib = tokens[1].lstrip("<").rstrip(">")
                 if lib in self.dependencies: # To prevent recursive inclusions
@@ -178,15 +202,19 @@ class Assembler:
             case _:
                 raise ValueError(f"No such compiler annotation `{tokens[0]}` (in {" ".join(tokens)})")
 
+    def asm_to_text(self):
+        return "\n".join([" ".join([f"{x:032b}"[i:i+8] for i in range(0,32,8)]) for x in self.assembled])
+
     def __repr__(self):
         if self.assembled:
-            return "Assembled code: \n" + "\n".join([" ".join([f"{x:032b}"[i:i+8] for i in range(0,32,8)]) for x in self.assembled])
+            return "Assembled code: \n" + self.asm_to_text()
         if self.instructions:
             return "Processed code: \n" + "\n".join([x.__repr__() for x in self.instructions])
         return "Unprocessed code" + self.code
 
 if __name__ == "__main__":
     os.chdir("..")
-    asm = Assembler.from_file("./examples/add.jsm")
+    asm = Assembler.from_file("./examples/add.jsm", logger=logging.getLogger(__name__))
+    print(asm.assemble())
     asm.assemble()
     print(asm)
