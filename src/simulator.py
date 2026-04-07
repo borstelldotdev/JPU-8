@@ -20,6 +20,7 @@ class JPU:
 
         self.flag = False
         self.code = code
+        self.halted = False
 
         self.registers = {
             "A": c_uint8(0),
@@ -77,10 +78,77 @@ class JPU:
                 to_reg.value = from_reg.value
 
             case 0b01:
-                pass
+                a, b = self.XI.value, self.YI.value
+                u = []
+                for _ in range(6):
+                    u.append(instruction_data & 0b00000001)
+                    u = u >> 1
+
+                flg, not_z, carry, op_, not_y, not_x = u
+                a = a ^ (not_x * 0b11111111)
+                b = b ^ (not_y * 0b11111111)
+                if op_:
+                    out = a | b
+                else:
+                    out = a + b + carry
+                    if flg:
+                        self.flag = bool(a + b + carry > 255)
+
+                out = out ^ (not_z * 0b11111111)
+                if op_:
+                    self.flag = out == 0b00000000
+
+                self.ZO.value = out
 
             case 0b10:
                 raise NotImplementedError
 
             case 0b11:
-                pass
+                match instruction_data:
+                    case 0b000000:
+                        # Halt
+                        self.halted = True
+                    case 0b000001:
+                        # Pause
+                        input("Press enter to continue... ")
+                    case 0b000010:
+                        pass
+                    case 0b000011:
+                        pass
+                    case 0b000100:
+                        pass
+                    case 0b001100:
+                        pass
+                    case 0b010100:
+                        pass
+                    case 0b011100:
+                        pass
+                    case 0b100100:
+                        pass
+                    case 0b101100:
+                        pass
+                    case 0b110100:
+                        pass
+                    case 0b111100:
+                        pass
+                    case 0b000100:
+                        pass
+                    case 0b001100:
+                        pass
+                    case 0b010100:
+                        pass
+                    case 0b011100:
+                        pass
+                    case 0b100100:
+                        pass
+                    case 0b101100:
+                        pass
+                    case 0b110100:
+                        pass
+                    case 0b111100:
+                        pass
+                    case 0b111101:
+                        pass
+                    case 0b111111:
+                        # No-op
+                        pass
