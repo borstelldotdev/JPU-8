@@ -80,6 +80,9 @@
 #define SDEV   0b00111101
 #define NOP    0b00111111
 
-; SDEV-flaggor
 
+; SDEV-flaggor
 #define DEVICE_NUM_DECIMAL 0
+#define DEVICE_NUM_BIN    1
+#define DEVICE_NUM_HEX    2
+#define DEVICE_TEXT_ASCII 8

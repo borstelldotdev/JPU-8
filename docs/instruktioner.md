@@ -88,3 +88,11 @@ Instruktionslayout:
 | Set device      | SDEV     | 111101 | Välj vilken enhet `IM` som `EX` ska interagera med |
 | No Opeartion    | NOP      | 111111 | Gör ingenting                                      |
 
+
+## Expansionsports-enheter
+| Mnemonic           | SDEV-id | Beskrivning          |
+|--------------------|---------|----------------------|
+| DEVICE_NUM_DECIMAL | 0       | Vanliga (bas 10) tal |
+| DEVICE_NUM_BIN     | 1       | Binära tal           |
+| DEVICE_NUM_HEX     | 2       | Hexadecimala tal     |
+| DEVICE_TEXT_ASCII  | 8       | ASCII-text           |

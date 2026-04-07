@@ -61,18 +61,41 @@ class ExpansionPort(SupportsValueReadWrite):
 
     @property
     def value(self):
-        if self.mode.value == 0:
-            val = int(input("IN  < ")) & 0xFF
-            return val
-        else:
-            raise ValueError("No such expansion port mode")
+        match self.mode.value:
+            case 0:
+                val = int(input("IN  < ")) & 0xFF
+                return val
+            case 1:
+                # Binära tal
+                # TODO: Implement
+                raise NotImplementedError()
+            case 2:
+                # Hexadecimala tal
+                # TODO: Implement
+                raise NotImplementedError()
+            case 8:
+                val = ord(input("IN  < ")[0])
+                return val
+            case _:
+                raise ValueError("No such expansion port mode")
 
     @value.setter
     def value(self, val):
-        if self.mode.value == 0:
-            print("OUT >", val)
-        else:
-            raise ValueError("No such expansion port mode")
+        match self.mode.value:
+            case 0:
+                print("OUT >", val)
+            case 1:
+                # Binära tal
+                # TODO: Implement
+                raise NotImplementedError()
+            case 2:
+                # Hexadecimala tal
+                # TODO: Implement
+                raise NotImplementedError()
+            case 8:
+                print(chr(val), end="")
+            case _:
+                raise ValueError("No such expansion port mode")
 
 
 class JPU:
@@ -183,7 +206,8 @@ class JPU:
         instruction, im = self.code[self.PC.value].get_pair(self.flag)
         instruction_cls = instruction.value >> 6
         instruction_data = instruction.value & 0b00111111
-        self.IM = im
+        # noinspection PyAttributeOutsideInit
+        self.IM.value = im.value
 
         match instruction_cls:
             case 0b00:
@@ -287,7 +311,7 @@ class JPU:
                         pass
                     case 0b111101:
                         # Set device
-                        self.EX.mode = self.IM
+                        self.EX.mode.value = self.IM.value
                     case 0b111111:
                         # No-op
                         pass
