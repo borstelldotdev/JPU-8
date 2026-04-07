@@ -46,10 +46,11 @@ class Instruction:
 
 
 class Preprocessor:
-
     def __init__(self, code: str):
         self.code = code
         self.instructions: list[Instruction] = []
+        self.definitions = {}
+        self.
 
     @classmethod
     def from_file(cls, filename: str):
@@ -73,6 +74,8 @@ class Preprocessor:
 
             instruction = Instruction.parse(code)
             self.instructions.append(instruction)
+
+
 
     def parse_compiler_annotation(self, tokens: list[str]):
         match tokens[0].lower():

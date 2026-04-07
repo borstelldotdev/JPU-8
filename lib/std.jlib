@@ -1,0 +1,46 @@
+; Swap
+#macro SWP {
+    MV $1 D
+    MV $2 $1
+    MV D $2
+}
+
+; Greater than
+#macro GT {
+    MV $1 XI
+    MV IM YI [$2]
+    ALU SUB
+}
+
+; Greater than or equal
+#macro GTE {
+    MV $1 XI
+    MV IM YI [$2]
+    ALU SUBC
+}
+
+; Less than
+#macro LT {
+    MV $1 XI
+    MV IM YI [$2]
+    ALU SUBI
+}
+
+; Less than or equal
+#macro LTE {
+    MV $1 XI
+    MV IM YI [$2]
+    ALU SUBIC
+}
+
+; Equal
+#macro EQU {
+    MV $1 XI
+    MV IM YI [$2]
+    ALU SUBC
+    SYS ZERO
+}
+
+#macro FLG_NOT {
+    SYS S_FLG | SYS R_FLG
+}
