@@ -1,6 +1,8 @@
 import logging
 from ctypes import c_uint8
 from abc import ABC, abstractmethod
+from code import InteractiveConsole
+
 
 class Instruction:
     def __init__(self, instruction_a: c_uint8, instruction_b: c_uint8,
@@ -50,7 +52,7 @@ class Register(SupportsValueReadWrite):
 
     @value.setter
     def value(self, val):
-        self.val = val & 0xFF
+        self.val.value = val & 0xFF
 
 class ExpansionPort(SupportsValueReadWrite):
     def __init__(self):
@@ -74,31 +76,58 @@ class ExpansionPort(SupportsValueReadWrite):
 
 
 class JPU:
+    class Repl(InteractiveConsole):
+        def __init__(self, namespace=None):
+            super().__init__(locals=namespace or {})
+            self.instance = namespace["JPU"]
+
+        def interact(self, banner="", exitmsg=""):
+            try:
+                super().interact(banner=banner, exitmsg=exitmsg)
+            except SystemExit:
+                print("Exiting REPL...")
+                print()
+
+        def runsource(self, source, filename="<input>", symbol="single"):
+            match source.lower():
+                case ".exit":
+                    raise SystemExit
+                case ".step":
+                    self.instance.step()
+                case ".dump":
+                    for reg in self.instance.registers.keys():
+                        print(f"{reg}: {self.instance.registers[reg].value}")
+                    print("Flag:", self.instance.flag)
+                case _:
+                    super().runsource(source, filename=filename, symbol=symbol)
+
+
     def __init__(self, code: list[Instruction], logger: logging.Logger):
         assert len(code) <= 256
 
         self.flag = False
         self.code = code
         self.halted = True
+        self.debug_mode = False
+        self.logger = logger
 
-        self.registers = {
-            "A": c_uint8(0),
-            "B": c_uint8(0),
-            "C": c_uint8(0),
-            "D": c_uint8(0),
-            "XI": c_uint8(0),
-            "YI": c_uint8(0),
-            "ZO": c_uint8(0),
-            "IM": c_uint8(0),
-            "MEM": c_uint8(0),
-            "PC": c_uint8(0),
+        self.registers: dict[str, SupportsValueReadWrite] = {
+            "A": Register(),
+            "B": Register(),
+            "C": Register(),
+            "D": Register(),
+            "XI": Register(),
+            "YI": Register(),
+            "ZO": Register(),
+            "IM": Register(),
+            "MEM": Register(),
+            "PC": Register(),
         }
 
         for key in self.registers.keys():
             self.__setattr__(key, self.registers[key])
 
         self.EX = ExpansionPort()
-        self.registers["EX"] = self.EX
 
         self.read = {
             0b000: self.A,
@@ -133,10 +162,24 @@ class JPU:
 
     def start(self):
         self.halted = False
+        self.debug_mode = False
         while not self.halted:
-            self._execute_one()
+            try:
+                self.step()
+            except KeyboardInterrupt:
+                logging.info("Received keyboard interrupt. Exiting...")
 
-    def _execute_one(self):
+    def debug(self):
+        self.halted = False
+        self.debug_mode = True
+        self.logger.info("Debug mode enabled")
+        while not self.halted:
+            try:
+                self.step()
+            except KeyboardInterrupt:
+                logging.info("Received keyboard interrupt. Exiting...")
+
+    def step(self):
         instruction, im = self.code[self.PC.value].get_pair(self.flag)
         instruction_cls = instruction.value >> 6
         instruction_data = instruction.value & 0b00111111
@@ -185,6 +228,26 @@ class JPU:
                         self.halted = True
                     case 0b000001:
                         # Pause
+                        if self.debug_mode:
+                            print()
+                            if input("[Debugger] Breakpoint reached. Do you wish to open the live REPL? (Y/N): ") \
+                                    .lower().startswith("y"):
+                                self.PC.value += 1
+                                print("Welcome to the live REPL!")
+                                print("Access registers with JPU.<REGISTER_NAME>")
+                                print("Step with .step")
+                                print("Dump registers with .dump")
+                                print("Exit with .exit")
+
+
+                                ns =  {
+                                    "JPU": self
+                                }
+
+                                repl = self.Repl(ns)
+                                repl.interact(banner="", exitmsg="")
+                                return
+
                         input("Press enter to continue... ")
                     case 0b000010:
                         pass

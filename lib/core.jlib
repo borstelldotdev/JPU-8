@@ -58,7 +58,7 @@
 ; Systeminstruktioner
 
 #define HLT    0b00000000
-#define PAU    0b00000001
+#define PAUSE  0b00000001
 #define R_FLG  0b00000010
 #define S_FLG  0b00000011
 #define JMPA   0b00000100

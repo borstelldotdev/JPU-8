@@ -66,7 +66,7 @@ Instruktionslayout:
 | Namn            | Mnemonic | Bitar  | Anteckningar                                       |
 |-----------------|----------|--------|----------------------------------------------------|
 | Halt            | HLT      | 000000 | Avsluta programmet                                 |
-| Pause           | PAU      | 000001 | Stäng av den automatiska klockan                   |
+| Pause           | PAUSE    | 000001 | Stäng av den automatiska klockan                   |
 | Reset flag      | R_FLG    | 000010 | Sätt flaggan till `0`                              |
 | Set flag        | S_FLG    | 000011 | Sätt flaggan till `1`                              |
 | Jump A          | JMPA     | 000100 | Sätt `PC` till `A`                                 |

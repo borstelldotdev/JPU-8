@@ -28,8 +28,8 @@ if __name__ == "__main__":
 
     output_file = None
     input_file = None
-    verbose = False # TODO: Implement
     run = False
+    debug = False
 
     if not arguments:
         print(f"JPU-8 compiler, assembler and simulator version {VERSION}")
@@ -62,6 +62,9 @@ if __name__ == "__main__":
                 case "-r" | "--run" | "--run-file" | "-s" | "--simulate":
                     tasks.append(ParseableItems.RUN)
 
+                case "-d" | "--debug" | "--debugger":
+                    tasks.append(ParseableItems.RUN)
+                    debug = True
 
                 # Not implemented yet
                 case "-c" | "--compile":
@@ -72,7 +75,7 @@ if __name__ == "__main__":
                 case "-l" | "--log" | "--log-file":
                     to_parse.insert(0, ParseableItems.LOG_FILE)
 
-                case "-v" | "--verbose" | "--debug":
+                case "-v" | "--verbose":
                     logger.setLevel(logging.DEBUG)
 
                 case "--info":
@@ -152,7 +155,10 @@ if __name__ == "__main__":
                 logger.info(" - Executing...")
                 print()
                 interpreter = JPU.load_from_bin(current, logger)
-                interpreter.start()
+                if debug:
+                    interpreter.debug()
+                else:
+                    interpreter.start()
                 current = None
                 print()
                 logger.info("   Done executing")
@@ -162,3 +168,4 @@ if __name__ == "__main__":
 
     print()
     print("JPU-8-utils done. exiting...")
+    exit(0)
