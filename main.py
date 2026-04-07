@@ -3,6 +3,7 @@ from enum import IntEnum
 import logging
 
 from src.assembler import Assembler
+from src.simulator import JPU
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='[%(levelname)s]: %(message)s', level=logging.INFO)
@@ -16,15 +17,16 @@ class ParseableItems(IntEnum):
 
     COMPILE = 10
     ASSEMBLE = 11
-    RUN = 12
+    SAVE = 19
+    RUN = 20
 
 if __name__ == "__main__":
     script, arguments = argv[0], argv[1:].copy()
 
-    to_parse = [ParseableItems.INPUT_FILE]
-    tasks: list[ParseableItems] = []
+    to_parse: list[ParseableItems] = [ParseableItems.INPUT_FILE]
+    tasks: list[ParseableItems] = [ParseableItems.SAVE]
 
-    output_file = "out"
+    output_file = None
     input_file = None
     verbose = False # TODO: Implement
     run = False
@@ -58,7 +60,7 @@ if __name__ == "__main__":
                     tasks.append(ParseableItems.ASSEMBLE)
 
                 case "-r" | "--run" | "--run-file" | "-s" | "--simulate":
-                    run = True
+                    tasks.append(ParseableItems.RUN)
 
 
                 # Not implemented yet
@@ -120,8 +122,10 @@ if __name__ == "__main__":
         logger.error("ERROR: no tasks were given. Please provide one or more tasks.")
         exit(-1)
 
+    logger.info(f"Loading `{input_file}`...")
     with open(input_file, "r") as f:
         current = f.read()
+    logger.debug(f"Successfully loaded `{input_file}`")
 
     logger.info(f"Found {len(tasks)} tasks")
 
@@ -131,19 +135,30 @@ if __name__ == "__main__":
                 logger.info(" - Assembling...")
                 asm = Assembler(current, logger)
                 current = asm.assemble()
-                logger.info("   done")
+                logger.debug("  Done assembling")
+
+            case ParseableItems.SAVE:
+                if current:
+                    if not output_file:
+                        logger.warning("No output file was specified. The output will be discarded")
+                        continue
+
+                    logger.info(f" - Writing output to `{output_file}`")
+                    with open(output_file, "w") as f:
+                        f.write(current)
+                    logger.info(f"   Successfully wrote output to `{output_file}`")
 
             case ParseableItems.RUN:
-                logger.info(" - Running...")
-                # run
-                logger.info("   done")
+                logger.info(" - Executing...")
+                print()
+                interpreter = JPU.load_from_bin(current, logger)
+                interpreter.start()
+                current = None
+                print()
+                logger.info("   Done executing")
 
 
-    if current:
-        logger.info(f"Writing output to `{output_file}`")
-        with open(output_file, "w") as f:
-            f.write(current)
-        logger.info("done")
+
 
     print()
     print("JPU-8-utils done. exiting...")
