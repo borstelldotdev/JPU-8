@@ -232,7 +232,7 @@ class JPU:
                 from_reg = self.read[from_]
                 to_reg = self.write[to_]
 
-                # Sätt minnesaddress
+                # Sätt minnesadress
                 if type(from_reg) == Memory:
                     from_reg.addr.value = self.IM.value
 
