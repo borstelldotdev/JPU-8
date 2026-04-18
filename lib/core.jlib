@@ -48,6 +48,7 @@
 #define SUBC  0b00010100
 #define SUBI  0b00100000
 #define SUBIC 0b00100100
+#define SUBCI 0b00100100
 
 ; Logik
 #define OR   0b00001000

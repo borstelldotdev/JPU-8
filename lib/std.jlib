@@ -1,46 +1,104 @@
-; Swap
-#macro SWP {
-    MV $1 D
-    MV $2 $1
-    MV D $2
+#proc MOV {
+    MV MEM D [$1]
+    MV D MEM [$2]
 }
+
+#proc SWP {
+    MV MEM C [$1]
+    MV MEM D [$2]
+    MV C MEM [$2]
+    MV D MEM [$1]
+}
+
+#proc ADD
+    MV MEM XI [$1]
+    MV MEM YI [$2]
+    ALU ADD
+    MV ZO MEM [$3]
+#end
+
+#proc SUB
+    MV MEM XI [$1]
+    MV MEM YI [$2]
+    ALU SUBIC
+    MV ZO MEM [$3]
+#end
+
+#proc ADD_LONG
+    ; TODO: implementera pointers
+
+    ; addera byte 1
+    MV MEM XI [$1]
+    MV MEM YI [$3]
+    ALU ADD
+    MV ZO MEM [$5]
+
+    ; addera byte 2
+    MV MEM XI [$2]
+    MV MEM YI [$4]
+    ALU ADD | ALU ADDC
+    MV ZO MEM [$6]
+#end
+
+#proc SUB_LONG
+    ; addera byte 1
+    MV MEM XI [$1]
+    MV MEM YI [$3]
+    ALU ADD
+    MV ZO MEM [$5]
+
+    ; addera byte 2
+    MV MEM XI [$2]
+    MV MEM YI [$4]
+    ALU ADD | ALU ADDC
+    MV ZO MEM [$6]
+#end
+
 
 ; Greater than
-#macro GT {
-    MV $1 XI
-    MV IM YI [$2]
+#proc GT
+    MV MEM XI [$1]
+    MV MEM YI [$2]
     ALU SUB
-}
+#end
 
 ; Greater than or equal
-#macro GTE {
-    MV $1 XI
-    MV IM YI [$2]
+#proc GTE
+    MV MEM XI [$1]
+    MV MEM YI [$2]
     ALU SUBC
-}
+#end
 
 ; Less than
-#macro LT {
-    MV $1 XI
-    MV IM YI [$2]
+#proc LT
+    MV MEM XI [$1]
+    MV MEM YI [$2]
     ALU SUBI
-}
+#end
 
 ; Less than or equal
-#macro LTE {
-    MV $1 XI
-    MV IM YI [$2]
+#proc LTE
+    MV MEM XI [$1]
+    MV MEM YI [$2]
     ALU SUBIC
-}
+#end
 
 ; Equal
-#macro EQU {
-    MV $1 XI
-    MV IM YI [$2]
+#proc EQU
+    MV MEM XI [$1]
+    MV MEM YI [$2]
     ALU SUBC
     SYS ZERO
-}
+#end
 
-#macro FLG_NOT {
+#proc BRA
+    SYS NOP | SYS JMP [1]
+#end
+
+#proc BRA_I
+    SYS JMP [1] | SYS NOP
+#end
+
+#proc FLG_NOT
     SYS S_FLG | SYS R_FLG
-}
+#end
