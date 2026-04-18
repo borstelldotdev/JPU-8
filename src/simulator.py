@@ -2,6 +2,7 @@ import logging
 from ctypes import c_uint8
 from abc import ABC, abstractmethod
 from code import InteractiveConsole
+from array import array
 
 
 class Instruction:
@@ -53,6 +54,20 @@ class Register(SupportsValueReadWrite):
     @value.setter
     def value(self, val):
         self.val.value = val & 0xFF
+
+class Memory(SupportsValueReadWrite):
+    def __init__(self):
+        super().__init__()
+        self.val = array("B", [0] * 256)
+        self.addr = c_uint8(0)
+
+    @property
+    def value(self):
+        return self.val[self.addr.value] & 0xFF
+
+    @value.setter
+    def value(self, val):
+        self.val[self.addr.value] = val & 0xFF
 
 class ExpansionPort(SupportsValueReadWrite):
     def __init__(self):
@@ -143,7 +158,7 @@ class JPU:
             "YI": Register(),
             "ZO": Register(),
             "IM": Register(),
-            "MEM": Register(),
+            "MEM": Memory(),
             "PC": Register(),
         }
 
@@ -216,6 +231,13 @@ class JPU:
                 to_   = instruction_data & 0b000111
                 from_reg = self.read[from_]
                 to_reg = self.write[to_]
+
+                # Sätt minnesaddress
+                if type(from_reg) == Memory:
+                    from_reg.addr.value = self.IM.value
+
+                if type(to_reg) == Memory:
+                    to_reg.addr.value = self.IM.value
 
                 to_reg.value = from_reg.value
 
