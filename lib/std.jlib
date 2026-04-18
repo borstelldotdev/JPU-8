@@ -54,6 +54,57 @@
     MV ZO MEM [$6]
 #end
 
+#proc AND
+    MV MEM XI [$1]
+    MV MEM YI [$2]
+    ALU AND
+    MV ZO MEM [$3]
+#end
+
+#proc NAND
+    MV MEM XI [$1]
+    MV MEM YI [$2]
+    ALU NAND
+    MV ZO MEM [$3]
+#end
+
+#proc OR
+    MV MEM XI [$1]
+    MV MEM YI [$2]
+    ALU OR
+    MV ZO MEM [$3]
+#end
+
+#proc NOR
+    MV MEM XI [$1]
+    MV MEM YI [$2]
+    ALU NOR
+    MV ZO MEM [$3]
+#end
+
+#proc XOR
+    MV MEM XI [$1]
+    MV MEM YI [$2]
+    ALU OR
+    MV ZO D
+    ALU NAND
+    MV ZO YI
+    MV D XI
+    ALU AND
+    MV ZO MEM [$3]
+#end
+
+#proc XNOR
+    MV MEM XI [$1]
+    MV MEM YI [$2]
+    ALU OR
+    MV ZO D
+    ALU NAND
+    MV ZO YI
+    MV D XI
+    ALU NAND
+    MV ZO MEM [$3]
+#end
 
 ; Greater than
 #proc GT
