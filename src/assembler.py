@@ -51,6 +51,11 @@ class Instruction:
         tokens = code.split(" ")
         compiled = 0b00000000
         idx = 0
+
+        if tokens[0] in assembler.definitions.keys():
+                # Hantera definitionskedjor rekursivt
+                return Instruction._parse_token(assembler.definitions[token], assembler)
+
         for token in tokens:
             compiled = compiled | Instruction._parse_token(token, assembler, idx=idx)
             idx += 1
@@ -95,9 +100,12 @@ class Assembler:
         self.assembled: list[int] = []
 
         self.definitions = {}
-        self.macros = {}
+        self.procs = {}
         self.dependencies: list[str] = []
         self.entrypoint = None
+
+        self.parsing_proc = ""
+        self.current_proc: list[str] = []
 
     @classmethod
     def from_file(cls, filename: str, logger):
@@ -132,13 +140,18 @@ class Assembler:
             self.parse_compiler_annotation(code.split())
             return
 
-        instruction = Instruction.parse(code)
-        self.instructions.append(instruction)
+        if self.parsing_proc:
+            self.current_proc.append(code)
+        else:
+            instruction = Instruction.parse(code)
+            self.instructions.append(instruction)
 
     def tokenize(self, code):
         codelines = code.split('\n')
-        for line in codelines:
-            self._tokenize_line(line)
+        i = 0
+        while i < len(codelines):
+            self._tokenize_line(codelines[i])
+            i += 1
 
     def merge(self):
         ptr = 0
@@ -184,9 +197,14 @@ class Assembler:
                 assert len(tokens) == 3
                 self.definitions[tokens[1]] = tokens[2]
 
-            case "#macro":
-                # TODO: Implement
-                raise NotImplementedError()
+            case "#proc":
+                assert len(tokens) == 2
+                self.parsing_proc = tokens[1]
+
+            case "#end":
+                self.procs[self.parsing_proc] = self.current_proc
+                self.parsing_proc = ""
+                self.current_proc = []
 
             case "#entrypoint":
                 assert len(tokens) == 2

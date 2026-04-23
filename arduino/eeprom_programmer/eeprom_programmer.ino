@@ -1,10 +1,21 @@
 // 0 + 1: RX & TX
 
-uint8_t[] data_pins = {2, 3, 4, 5, 6, 7, 8, 9};
+uint8_t data_pins[] = {2, 3, 4, 5, 6, 7, 8, 9};
 uint8_t latch_pin = 10;
 uint8_t write_pin = 11;
 uint8_t addr_A8_pin = 12;
 uint8_t addr_A9_pin = 13;
+
+
+// 0 - dot
+// 1 - bottom right
+// 2 - bottom
+// 3 - bottom left
+// 4 - center
+// 5 - top left
+// 6 - top
+// 7 - top right
+
 
 void pulsePin(uint8_t pin) {
   digitalWrite(pin, HIGH);
@@ -14,16 +25,19 @@ void pulsePin(uint8_t pin) {
 
 void setupData(uint8_t data) {
   for (uint8_t i = 0; i < 8; i++) {
-    digitalWrite(data_pins[i], data & 1);
-    data >>= 1;
+    digitalWrite(data_pins[7 - i], (data >> i) & 1);
   }
 }
 
 void setupAddress(uint16_t addr) {
-  setupData(data & 0xFF);
+  for (uint8_t i = 0; i < 8; i++) {
+    digitalWrite(data_pins[i], (addr >> i) & 1);
+  }
+
+  setupData(addr & 0xFF);
   pulsePin(latch_pin);
-  digitalWrite(addr_A8_pin, (data_pins >> 8) & 1);
-  digitalWrite(addr_A9_pin, (data_pins >> 9) & 1);
+  digitalWrite(addr_A8_pin, (addr >> 8) & 1);
+  digitalWrite(addr_A9_pin, (addr >> 9) & 1);
 }
 
 void write(uint16_t addr, uint8_t data) {
@@ -45,17 +59,34 @@ void configurePins() {
 
 void setup() {
   configurePins();
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   write(0, 5);
 }
 
 void loop() {
-  Serial.write("\nEnter an address: ");
-  addr = static_cast<uint16_t>(Serial.readStringUntil(" ").toInt());
-  Serial.write("\nEnter the data to write at the address: ");
-  data = static_cast<uint8_t>(Serial.readStringUntil(" ").toInt());
-  Serial.write("\nWriting... ");
-  write(addr, data);
-  Serial.write("done!");
+  Serial.println("\nEnter address and data:");
+
+  while (!Serial.available()) {}
+
+  String input = Serial.readStringUntil('\n');
+
+  int addr = 0;
+  int data = 0;
+
+  int parsed = sscanf(input.c_str(), "%d %d", &addr, &data);
+
+  if (parsed == 2) {
+    Serial.print("Address: ");
+    Serial.println(addr);
+
+    Serial.print("Data: ");
+    Serial.println(data);
+
+    Serial.print("Writing... ");
+    write((uint16_t)addr, (uint8_t)data);
+    Serial.println("done!");
+  } else {
+    Serial.println("Invalid input. Please enter two numbers separated by space.");
+  }
 }

@@ -8,7 +8,6 @@ from array import array
 class Instruction:
     def __init__(self, instruction_a: c_uint8, instruction_b: c_uint8,
                  im_a=c_uint8(0), im_b=c_uint8(0)):
-        self.instruction_a = instruction_a
         self.instruction_b = instruction_b
         self.im_a = im_a
         self.im_b = im_b
