@@ -52,9 +52,9 @@ class Instruction:
         compiled = 0b00000000
         idx = 0
 
-        if tokens[0] in assembler.definitions.keys():
-                # Hantera definitionskedjor rekursivt
-                return Instruction._parse_token(assembler.definitions[token], assembler)
+        # if tokens[0] in assembler.definitions.keys():
+        #         # Hantera definitionskedjor rekursivt
+        #        return Instruction._parse_token(assembler.definitions[token], assembler)
 
         for token in tokens:
             compiled = compiled | Instruction._parse_token(token, assembler, idx=idx)
@@ -231,8 +231,8 @@ class Assembler:
         return "Unprocessed code" + self.code
 
 if __name__ == "__main__":
-    os.chdir("..")
-    asm = Assembler.from_file("./examples/add.jsm", logger=logging.getLogger(__name__))
+    os.chdir("../..")
+    asm = Assembler.from_file("../compiler/examples/add.jsm", logger=logging.getLogger(__name__))
     print(asm.assemble())
     asm.assemble()
     print(asm)

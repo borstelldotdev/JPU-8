@@ -2,7 +2,7 @@ from sys import argv, exit
 from enum import IntEnum
 import logging
 
-from src.assembler import Assembler
+from src.assembler.assembler import Assembler
 from src.simulator import JPU
 
 logger = logging.getLogger(__name__)

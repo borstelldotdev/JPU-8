@@ -13,5 +13,5 @@ JPU-8 har 11 register:
 | ZO   | Y   | N     | 100 | ALU output                                                  |
 | IM   | Y   | N     | 101 | Intermediate-värden                                         |
 | EX   | Y   | Y     | 110 | Expansions-port                                             |
-| MEM  | Y   | Y     | 111 | Minne (IM: address)                                         |
+| MEM  | Y   | Y     | 111 | Minne (XI: address)                                         |
 | PC   | N   | Y     | xxx | Programräknare (Ingen address, styrs från SYS/kontrolenhet) |

@@ -77,14 +77,6 @@ Instruktionslayout:
 | Jump            | JMP      | 101100 | Sätt `PC` till `IM`                                |
 | Jump MEM        | JMPMEM   | 110100 | Sätt `PC` till `MEM[IM]`                           |
 | Jump EX         | JMPEX    | 111100 | Sätt `PC` till `EX` **OSÄKERT!!!**                 |
-| Read Pointer A  | RPTRA    | 000100 | Sätt `ZO` till `MEM[A]`                            |
-| Read Pointer B  | RPTRB    | 001100 | Sätt `ZO` till `MEM[B]`                            |
-| Read Pointer C  | RPTRC    | 010100 | Sätt `ZO` till `MEM[C]`                            |
-| Read Pointer D  | RPTRD    | 011100 | Sätt `ZO` till `MEM[D]`                            |
-| Write Pointer A | WPTRA    | 100100 | Sätt `MEM[A]` till `XI`                            |
-| Write Pointer B | WPTRB    | 101100 | Sätt `MEM[A]` till `XI`                            |
-| Write Pointer C | WPTRC    | 110100 | Sätt `MEM[A]` till `XI`                            |
-| Write Pointer D | WPTRD    | 111100 | Sätt `MEM[A]` till `XI`                            |
 | Set device      | SDEV     | 111101 | Välj vilken enhet `IM` som `EX` ska interagera med |
 | No Opeartion    | NOP      | 111111 | Gör ingenting                                      |
 

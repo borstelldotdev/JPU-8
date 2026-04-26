@@ -7,35 +7,33 @@ uint8_t addr_A8_pin = 12;
 uint8_t addr_A9_pin = 13;
 
 
-// 0 - dot
-// 1 - bottom right
-// 2 - bottom
-// 3 - bottom left
-// 4 - center
-// 5 - top left
-// 6 - top
-// 7 - top right
+void pulseLatch() {
+  digitalWrite(latch_pin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(latch_pin, LOW);
+}
 
-
-void pulsePin(uint8_t pin) {
-  digitalWrite(pin, HIGH);
+void pulseWrite() {
+  digitalWrite(write_pin, LOW);
   delayMicroseconds(1);
-  digitalWrite(pin, LOW);
+  digitalWrite(write_pin, HIGH);
 }
 
 void setupData(uint8_t data) {
   for (uint8_t i = 0; i < 8; i++) {
-    digitalWrite(data_pins[7 - i], (data >> i) & 1);
+    digitalWrite(data_pins[i], (data >> i) & 1);
+    // Serial.print(i);
+    // Serial.print(" ");
+    // Serial.println((data >> i) & 1);
   }
 }
 
 void setupAddress(uint16_t addr) {
   for (uint8_t i = 0; i < 8; i++) {
-    digitalWrite(data_pins[i], (addr >> i) & 1);
+    digitalWrite(data_pins[7 - i], (addr >> i) & 1);
   }
 
-  setupData(addr & 0xFF);
-  pulsePin(latch_pin);
+  pulseLatch();
   digitalWrite(addr_A8_pin, (addr >> 8) & 1);
   digitalWrite(addr_A9_pin, (addr >> 9) & 1);
 }
@@ -43,7 +41,9 @@ void setupAddress(uint16_t addr) {
 void write(uint16_t addr, uint8_t data) {
   setupAddress(addr);
   setupData(data);
-  pulsePin(write_pin);
+  delayMicroseconds(100);
+  pulseWrite();
+  delayMicroseconds(100);
 }
 
 void configurePins() {
@@ -51,6 +51,8 @@ void configurePins() {
   pinMode(write_pin, OUTPUT);
   pinMode(addr_A8_pin, OUTPUT);
   pinMode(addr_A9_pin, OUTPUT);
+
+  digitalWrite(write_pin, HIGH);
 
   for (uint8_t d : data_pins) {
     pinMode(d, OUTPUT);
@@ -65,7 +67,7 @@ void setup() {
 }
 
 void loop() {
-  Serial.println("\nEnter address and data:");
+  Serial.println("Enter address and data:");
 
   while (!Serial.available()) {}
 
