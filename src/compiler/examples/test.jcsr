@@ -1,9 +1,19 @@
-// Addera två tal
+// Testa lexer och parser
 
-func main() {
-    int x = 5;
-    int y = 7
-    int z = x + y;
-    print_str("Sum: ");
-    print_int(z); // Skriv ut utvärdet
+func test(arg1, arg2) {
+    function_with_no_arguments();
+    function_with_arguments(arg1, "literals", 420);
+
+    x = "literal string ; # ( ) [ ] { }";
+    y = 69;
+    z = y - 2;
+    very_long_expression = z + 5 * 7 & 0b00 | 0xFF ^ y;
+
+    {
+        block_function_1();
+        block_function_2();
+    }
 }
+
+func singe_statement_function()
+    test();

@@ -11,12 +11,16 @@ def repr_object(obj):
     return obj.__repr__()
 
 def repr_iterable(obj):
+    if not obj: return "<empty>"
+
     vals = []
     for val in obj:
         vals.append(repr_object(val))
     return "\n" + indent("\n".join(vals))
 
 def repr_dict(obj: dict):
+    if not obj: return "<empty>"
+
     vals = []
     for val in obj:
         if val == "parent":

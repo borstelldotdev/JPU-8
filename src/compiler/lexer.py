@@ -2,27 +2,28 @@ from src.compiler.tokens import *
 
 class Lexer:
     token_map = {
-        "(": (TokenType.OPENING_BRACKET,),
-        ")": (TokenType.CLOSING_BRACKET,),
+        "(": (TokenType.OPENING_PARENTHESIS,),
+        ")": (TokenType.CLOSING_PARENTHESIS,),
         "[": (TokenType.OPENING_SQUARE_BRACKET,),
         "]": (TokenType.CLOSING_SQUARE_BRACKET,),
         "{": (TokenType.OPENING_CURLY_BRACKET,),
         "}": (TokenType.CLOSING_CURLY_BRACKET,),
         ";": (TokenType.SEMICOLON,),
         "#": (TokenType.HASHTAG,),
+        ",": (TokenType.COMMA,),
 
-        "+": (TokenType.OPERAND, Operand.PLUS),
-        "-": (TokenType.OPERAND, Operand.MINUS),
-        "*": (TokenType.OPERAND, Operand.STAR),
-        "&": (TokenType.OPERAND, Operand.AMPERSAND),
-        "|": (TokenType.OPERAND, Operand.PIPE),
-        "^": (TokenType.OPERAND, Operand.UP_ARROW),
-        "~": (TokenType.OPERAND, Operand.TILDE),
+        "+": (TokenType.OPERAND, OperandType.PLUS),
+        "-": (TokenType.OPERAND, OperandType.MINUS),
+        "*": (TokenType.OPERAND, OperandType.STAR),
+        "&": (TokenType.OPERAND, OperandType.AMPERSAND),
+        "|": (TokenType.OPERAND, OperandType.PIPE),
+        "^": (TokenType.OPERAND, OperandType.UP_ARROW),
+        "~": (TokenType.OPERAND, OperandType.TILDE),
 
-        "=": (TokenType.OPERAND, Operand.EQUALITY),
-        ">": (TokenType.OPERAND, Operand.GREATER_THAN),
-        "<": (TokenType.OPERAND, Operand.LESS_THAN),
-        "!": (TokenType.OPERAND, Operand.EXCLAMATION),
+        "=": (TokenType.OPERAND, OperandType.EQUALITY),
+        ">": (TokenType.OPERAND, OperandType.GREATER_THAN),
+        "<": (TokenType.OPERAND, OperandType.LESS_THAN),
+        "!": (TokenType.OPERAND, OperandType.EXCLAMATION),
 
 
         "if": (TokenType.KEYWORD, KeywordType.IF),
@@ -36,7 +37,7 @@ class Lexer:
 
     delimiters = [" ", "\n", "\t"]
     pseudo_delimiters = ["(", ")", "[", "]", "{", "}", ";", "+", "-", "*", "&", "|", "^", "~",
-                         "=", ">", "<", "!", "/"]
+                         "=", ">", "<", "!", "/", ","]
     string_delimiters = ["\"", "\'"]
 
     @staticmethod
@@ -100,9 +101,12 @@ class Lexer:
                     inside_string = not inside_string
 
                 accumulator += current_char
-                result = Lexer.attempt_tokenization(accumulator, line, column)
-                if result is not None:
-                    tokens.append(result)
-                    accumulator = ""
+                if len(accumulator) == 1:
+                    # Försök ej tokeniza längre namn, som inte kan vara inline
+                    # Annars kommer `function_test();` tokeniza `func`
+                    result = Lexer.attempt_tokenization(accumulator, line, column)
+                    if result is not None:
+                        tokens.append(result)
+                        accumulator = ""
 
         return tokens

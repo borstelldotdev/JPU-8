@@ -8,16 +8,17 @@ class TokenType(Enum):
     OPERAND = auto()
     KEYWORD = auto()
 
-    OPENING_BRACKET = auto()
-    CLOSING_BRACKET = auto()
+    OPENING_PARENTHESIS = auto()
+    CLOSING_PARENTHESIS = auto()
     OPENING_SQUARE_BRACKET = auto()
     CLOSING_SQUARE_BRACKET = auto()
     OPENING_CURLY_BRACKET = auto()
     CLOSING_CURLY_BRACKET = auto()
     SEMICOLON = auto()
     HASHTAG = auto()
+    COMMA = auto()
 
-class Operand(Enum):
+class OperandType(Enum):
     PLUS = auto()
     MINUS = auto()
     STAR = auto()
@@ -48,7 +49,7 @@ class LiteralType(Enum):
 
 class Token:
     SUBTYPE_MAP = {
-        TokenType.OPERAND: Operand,
+        TokenType.OPERAND: OperandType,
         TokenType.KEYWORD: KeywordType,
     }
 
@@ -66,7 +67,7 @@ class Token:
 
             raise TypeError(f"{token_type.name} expects {expected}, got {got}")
 
-    def match(self, token_type=None, subtype=None, value=None):
+    def match(self, token_type=None, subtype=None, value=None) -> bool:
         return ((token_type is None or token_type is self.token_type) and
                 (subtype is None or subtype is self.subtype) and
                 (value is None or value is self.value))

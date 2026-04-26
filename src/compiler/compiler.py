@@ -1,20 +1,15 @@
 from lexer import Lexer
-from abstract_syntax_tree import AbstractSyntaxTree
+from parser import parse
 
-def test_lexer():
+def test():
     with open("examples/test.jcsr", "r", encoding="utf-8") as file:
         data = file.read()
 
     tokens = Lexer.tokenize(data)
 
-    for token in tokens:
-        print(token)
 
-def test_ast():
-    ast = AbstractSyntaxTree(None)
-    ast.add_func("test")
-    print()
+    ast = parse(tokens)
     print(ast)
 
 if __name__ == "__main__":
-    test_lexer()
+    test()
