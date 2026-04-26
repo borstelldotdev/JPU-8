@@ -1,8 +1,9 @@
+// Addera två tal
 
 func main() {
     int x = 5;
     int y = 7
     int z = x + y;
-    print("Sum: ");
-    print(z);
+    print_str("Sum: ");
+    print_int(z); // Skriv ut utvärdet
 }

@@ -9,6 +9,7 @@ class Lexer:
         "{": (TokenType.OPENING_CURLY_BRACKET,),
         "}": (TokenType.CLOSING_CURLY_BRACKET,),
         ";": (TokenType.SEMICOLON,),
+        "#": (TokenType.HASHTAG,),
 
         "+": (TokenType.OPERAND, Operand.PLUS),
         "-": (TokenType.OPERAND, Operand.MINUS),
@@ -33,9 +34,9 @@ class Lexer:
         "type": (TokenType.KEYWORD, KeywordType.TYPE),
     }
 
-    delimiters = [" ", "#", "\n", "\t"]
+    delimiters = [" ", "\n", "\t"]
     pseudo_delimiters = ["(", ")", "[", "]", "{", "}", ";", "+", "-", "*", "&", "|", "^", "~",
-                         "=", ">", "<", "!"]
+                         "=", ">", "<", "!", "/"]
     string_delimiters = ["\"", "\'"]
 
     @staticmethod
@@ -81,12 +82,18 @@ class Lexer:
                 continue
 
             if current_char in Lexer.delimiters or current_char in Lexer.pseudo_delimiters:
+                if accumulator == "/" and current_char == "/":
+                    inside_comment = True
+                    accumulator = ""
+                    continue
+
                 if accumulator and not inside_string:
                     tokens.append(Lexer.attempt_tokenization(accumulator, line, column, force=True))
                     accumulator = ""
                 if current_char == "\n":
                     line += 1
                     column = 0
+                    inside_comment = False
 
             if not (current_char in Lexer.delimiters):
                 if current_char in ["\"", "\'"]:

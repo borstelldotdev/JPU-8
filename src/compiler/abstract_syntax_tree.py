@@ -1,60 +1,82 @@
-from typing import Any, Optional
+from typing import Any
+from abc import ABC, abstractmethod
 
-class AbstractTreeNode:
+from src.compiler.tokens import Token, TokenType, Operand, KeywordType, LiteralType
+from src.compiler.prettyprint import *
+
+
+
+class TokenStream:
+    def __init__(self, tokens: list[Token]) -> None:
+        self.tokens = tokens
+        self.pointer = -1
+
+    def __next__(self) -> Token:
+        self.pointer += 1
+        if self.pointer >= len(self.tokens):
+            raise StopIteration
+        return self.tokens[self.pointer]
+
+    def next(self) -> Token:
+        return self.__next__()
+
+    def prev(self) -> Token:
+        self.pointer -= 1
+        return self.tokens[self.pointer]
+
+
+
+    def is_empty(self) -> bool:
+        return self.pointer == len(self.tokens) - 1
+
+
+class ParsingError(Exception):
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+
+
+
+class AbstractTreeNode(ABC):
     def __init__(self, parent: AbstractTreeNode | None, *data) -> None:
         self.parent = parent
 
-    def create_child(self, child_class: type[AbstractTreeNode], *child_data: Any) -> AbstractTreeNode | None:
-
-        child = child_class(self, *child_data)
+    def add_child(self, child: AbstractTreeNode) -> AbstractTreeNode | None:
+        child.parent = self
         return child
 
-    @staticmethod
-    def indent(text: str):
-        lines = text.splitlines()
-        lines = ["\t" + line for line in lines]
-        return "\n".join(lines)
-
-    @staticmethod
-    def _repr_object(obj):
-        if isinstance(obj, list) or isinstance(obj, tuple):
-            return AbstractTreeNode._repr_iterable(obj)
-        if isinstance(obj, dict):
-            return AbstractTreeNode._repr_dict(obj)
-        return obj.__repr__()
-
-    @staticmethod
-    def _repr_iterable(obj):
-        vals = []
-        for val in obj:
-            vals.append(AbstractTreeNode._repr_object(val))
-        return "\n" + AbstractTreeNode.indent("\n".join(vals))
-
-    @staticmethod
-    def _repr_dict(obj: dict):
-        vals = []
-        for val in obj:
-            if val == "parent":
-                continue
-
-            vals.append(val + ": " + AbstractTreeNode._repr_object(obj[val]))
-
-        return "\n" + AbstractTreeNode.indent("\n".join(vals))
-
     def __repr__(self):
-        return f"{type(self).__name__}:{self._repr_dict(self.__dict__)}"
+        return f"{type(self).__name__}:{repr_dict(self.__dict__)}"
 
+    @classmethod
+    @abstractmethod
+    def from_token_stream(cls, stream: TokenStream) -> AbstractTreeNode:
+        raise NotImplementedError()
 
 
 class AbstractSyntaxTree(AbstractTreeNode):
-    def __init__(self, parent: AbstractTreeNode | None) -> None:
-        super().__init__(parent)
+    def __init__(self, entrypoint: str="main") -> None:
+        super().__init__(None)
         self.functions = {}
-        self.entrypoint = "main"
+        self.entrypoint = entrypoint
 
-    def add_func(self, *func_data):
-        new: Optional[Function] = self.create_child(Function, *func_data)
+    def add_func(self, func: Function) -> None:
+        new = self.add_child(func)
         self.functions[new.name] = new
+
+    @classmethod
+    def from_token_stream(cls, stream: TokenStream) -> AbstractSyntaxTree:
+        new = cls()
+        while not stream.is_empty():
+            next_token = stream.next()
+
+            if next_token.match(token_type=TokenType.KEYWORD, subtype=KeywordType.FUNCTION):
+                fn = Function.from_token_stream(stream)
+                new.add_func(fn)
+            else:
+                # Maybe raise some errors??
+                pass
+
+        return new
 
 
 class Function(AbstractTreeNode):
@@ -71,16 +93,12 @@ class Statement:
         def __init__(self, parent: AbstractTreeNode, *statement_data: Any) -> None:
             super().__init__(parent)
 
-    class Assignment(Statement):
+    class Assignment(AbstractStatement):
         pass
 
 
-    class IgnoredExpression(AbstractExpression)
-
-class Statement(AbstractTreeNode):
-    pass
-
-
+    class IgnoredExpression(AbstractStatement):
+        pass
 
 class AbstractExpression(AbstractTreeNode): pass
 

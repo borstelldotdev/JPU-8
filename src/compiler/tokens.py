@@ -15,6 +15,7 @@ class TokenType(Enum):
     OPENING_CURLY_BRACKET = auto()
     CLOSING_CURLY_BRACKET = auto()
     SEMICOLON = auto()
+    HASHTAG = auto()
 
 class Operand(Enum):
     PLUS = auto()
@@ -64,6 +65,11 @@ class Token:
             got = type(subtype).__name__
 
             raise TypeError(f"{token_type.name} expects {expected}, got {got}")
+
+    def match(self, token_type=None, subtype=None, value=None):
+        return ((token_type is None or token_type is self.token_type) and
+                (subtype is None or subtype is self.subtype) and
+                (value is None or value is self.value))
 
     def __repr__(self):
         parts = [self.token_type.name]
