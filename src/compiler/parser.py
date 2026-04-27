@@ -24,6 +24,7 @@ class TokenStream:
 
     def match(self, *args, force=False) -> tuple[Token, int] | None:
         next_token = next(self)
+        assert len(args) != 0
 
         alternative = 0
         for arg in args:
@@ -45,7 +46,9 @@ class TokenStream:
         return result[0]
 
     def expect(self, *args) -> tuple[Token, int]:
-        return self.match(*args, force=True)
+        match = self.match(*args, force=True)
+        assert match is not None
+        return match
 
     def expect_one(self, **kwargs) -> Token:
         return self.expect(kwargs)[0]
@@ -69,7 +72,7 @@ class AbstractTreeNode(ABC):
         return child
 
     def __repr__(self):
-        return f"{type(self).__name__}:{repr_dict(self.__dict__)}"
+        return f"{type(self).__name__}:{repr_dict(dict(self.__dict__))}"
 
     @classmethod
     @abstractmethod
@@ -132,11 +135,26 @@ class Statement(AbstractTreeNode):
     @classmethod
     def from_token_stream(cls, stream: TokenStream) -> Statement:
         identifier, alternative = stream.expect({"token_type": TokenType.OPENING_CURLY_BRACKET},
-                                           {"token_type": TokenType.IDENTIFIER})
+                                                {"token_type": TokenType.KEYWORD, "subtype": KeywordType.IF},
+                                                {"token_type": TokenType.KEYWORD, "subtype": KeywordType.RETURN},
+                                                {"token_type": TokenType.KEYWORD, "subtype": KeywordType.WHILE},
+                                                {"token_type": TokenType.IDENTIFIER})
         match alternative:
             case 0: # `{`
                 return CompoundStatement.from_token_stream(stream)
-            case 1: # <identifier>
+            case 1: # if
+                stream.expect_one(token_type=TokenType.OPENING_PARENTHESIS)
+                expression = Exception.from_token_stream(stream)
+                stream.expect_one(token_type=TokenType.CLOSING_PARENTHESIS)
+                if_body = Statement.from_token_stream(stream)
+                
+                if stream.match_one(token_type=TokenType.KEYWORD)
+
+            case 2: # return
+                stream.expect_one(token_type=TokenType.SEMICOLON)
+            case 3: # while
+                stream.expect_one(token_type=TokenType.OPENING_PARENTHESIS)
+            case 4: # <identifier>
                 token, alternative = stream.expect({"token_type": TokenType.OPENING_PARENTHESIS},
                                                    {"token_type": TokenType.OPERAND, "subtype": OperandType.EQUALITY})
                 match alternative:
@@ -180,6 +198,16 @@ class CallStatement(Statement):
         super().__init__()
         self.function = function
         self.arguments = arguments
+
+class ConditionalStatement(Statement):
+    def __init__(self, if_body: Statement, else_body: Statement | None):
+        super().__init__()
+        self.if_body = if_body
+        self.else_body = else_body
+        self.add_child(if_body)
+        self.add_child(else_body)
+
+
 
 
 

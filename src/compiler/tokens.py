@@ -37,7 +37,6 @@ class KeywordType(Enum):
     IF = auto()
     ELSE = auto()
     WHILE = auto()
-    GOTO = auto()
     TYPE = auto()
     FUNCTION = auto()
     RETURN = auto()
