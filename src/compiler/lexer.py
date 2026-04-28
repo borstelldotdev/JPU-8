@@ -1,4 +1,4 @@
-from tokens import *
+from src.compiler.tokens import *
 
 class Lexer:
     token_map = {
@@ -88,8 +88,11 @@ class Lexer:
                     continue
 
                 if accumulator and not inside_string:
-                    tokens.append(Lexer.attempt_tokenization(accumulator, line, column, force=True))
+                    token = Lexer.attempt_tokenization(accumulator, line, column, force=True)
+                    assert token is not None
+                    tokens.append(token)
                     accumulator = ""
+                
                 if current_char == "\n":
                     line += 1
                     column = 0

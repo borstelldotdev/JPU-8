@@ -8,6 +8,7 @@ func test(arg1, arg2) {
     x = "literal string ; # ( ) [ ] { }";
     y = 69;
     z = y - 2;
+    unpotimized = 2 + 5;
     very_long_expression = z + 5 * 7 & 0b00 | 0xFF ^ y;
 
     {

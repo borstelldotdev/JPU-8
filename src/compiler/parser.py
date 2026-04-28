@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from tokens import Token, TokenType, OperandType, KeywordType, LiteralType
-from prettyprint import *
+from src.compiler.tokens import Token, TokenType, OperandType, KeywordType, LiteralType
+from src.compiler.prettyprint import *
 
 class TokenStream:
     def __init__(self, tokens: list[Token]) -> None:
@@ -66,9 +66,11 @@ class ParsingError(Exception):
 class AbstractTreeNode(ABC):
     def __init__(self) -> None:
         self.parent = None
+        self.child_nodes: list[AbstractTreeNode] = []
 
     def add_child(self, child: AbstractTreeNode) -> AbstractTreeNode | None:
         child.parent = self
+        self.child_nodes.append(child)
         return child
 
     def __repr__(self):
@@ -207,7 +209,8 @@ class ConditionalStatement(Statement):
         self.if_body = if_body
         self.else_body = else_body
         self.add_child(if_body)
-        self.add_child(else_body)
+        if else_body is not None:
+            self.add_child(else_body)
 
 
 
@@ -229,6 +232,8 @@ class Expression(AbstractTreeNode):
                 a = Literal(token.subtype, token.value)
             case 1: # Identifier
                 a = Variable(token.value)
+        assert a is not None
+
 
         operand = stream.match_one(token_type=TokenType.OPERAND)
         if operand:
