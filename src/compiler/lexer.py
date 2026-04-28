@@ -1,4 +1,4 @@
-from src.compiler.tokens import *
+from tokens import *
 
 class Lexer:
     token_map = {
@@ -30,7 +30,6 @@ class Lexer:
         "else": (TokenType.KEYWORD, KeywordType.ELSE),
         "func": (TokenType.KEYWORD, KeywordType.FUNCTION),
         "return": (TokenType.KEYWORD, KeywordType.RETURN),
-        "goto": (TokenType.KEYWORD, KeywordType.GOTO),
         "while": (TokenType.KEYWORD, KeywordType.WHILE),
         "type": (TokenType.KEYWORD, KeywordType.TYPE),
     }

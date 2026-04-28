@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from src.compiler.tokens import Token, TokenType, OperandType, KeywordType, LiteralType
-from src.compiler.prettyprint import *
+from tokens import Token, TokenType, OperandType, KeywordType, LiteralType
+from prettyprint import *
 
 class TokenStream:
     def __init__(self, tokens: list[Token]) -> None:
@@ -144,11 +144,13 @@ class Statement(AbstractTreeNode):
                 return CompoundStatement.from_token_stream(stream)
             case 1: # if
                 stream.expect_one(token_type=TokenType.OPENING_PARENTHESIS)
-                expression = Exception.from_token_stream(stream)
+                expression = Expression.from_token_stream(stream)
                 stream.expect_one(token_type=TokenType.CLOSING_PARENTHESIS)
                 if_body = Statement.from_token_stream(stream)
-                
-                if stream.match_one(token_type=TokenType.KEYWORD)
+                else_body = None
+
+                if stream.match_one(token_type=TokenType.KEYWORD, subtype=KeywordType.ELSE):
+                    else_body = Statement.from_token_stream(stream)
 
             case 2: # return
                 stream.expect_one(token_type=TokenType.SEMICOLON)
