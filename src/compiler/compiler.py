@@ -1,6 +1,6 @@
 from src.compiler.lexer import Lexer
 from src.compiler.parser import parse
-from src.compiler.optimizers.ast_optimizer import *
+from compiler.ast_optimizer import *
 
 
 def compile(code: str):

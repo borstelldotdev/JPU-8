@@ -44,7 +44,7 @@ class RecursiveMatcher:
     def new(cls, ast: AbstractSyntaxTree) -> RecursiveMatcher:
         new = cls(ast)
         new.add_patterns([
-            TwoLitterals
+            TwoLitteralOperation
         ])
 
         return new
@@ -56,8 +56,50 @@ class TwoLitteralOperation(AbstractPattern):
             match node.operand:
                 case OperandType.PLUS:
                     return Literal(LiteralType.NUMBER, node.a.value + node.b.value)
-                # TODO: Add more cases
+                case OperandType.MINUS:
+                    return Literal(LiteralType.NUMBER, node.a.value - node.b.value)
+                case OperandType.STAR:
+                    return Literal(LiteralType.NUMBER, node.a.value * node.b.value)
+                case OperandType.PIPE:
+                    return Literal(LiteralType.NUMBER, node.a.value | node.b.value)
+                case OperandType.AMPERSAND:
+                    return Literal(LiteralType.NUMBER, node.a.value & node.b.value)
+                case OperandType.UP_ARROW:
+                    return Literal(LiteralType.NUMBER, node.a.value ^ node.b.value)
+
+        return None
+
+class PointlessOpeation:
+    pointless_literal = {
+        OperandType.PLUS: 0,
+        OperandType.MINUS: 0,
+        OperandType.STAR: 1,
+
+        OperandType.AMPERSAND: 0xFF,
+        OperandType.PIPE: 0x00,
+        OperandType.UP_ARROW: 0x00,
+    }
+
+    @staticmethod
+    def match(node: AbstractTreeNode) -> AbstractTreeNode | None:
+        if isinstance(node, Operand):
+            lit, op = None, None
+
+            if isinstance(node.a, Literal):
+                lit = node.a
+                op = node.b
+            elif isinstance(node.b, Literal):
+                lit = node.b
+                op = node.a
+            
+            if lit is not None:
+                if node.operand in PointlessOpeation.pointless_literal \
+                   and PointlessOpeation.pointless_literal[node.operand] == lit:
+                    return op
+        
         return None
 
 
+class KnownCondition:
+    pass
 
