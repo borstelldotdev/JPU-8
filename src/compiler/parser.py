@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Any
+from enum import Enum, auto
 
 from src.compiler.tokens import Token, TokenType, OperandType, KeywordType, LiteralType
 from src.compiler.prettyprint import *
@@ -24,6 +25,7 @@ class TokenStream:
 
     def match(self, *args, force=False) -> tuple[Token, int] | None:
         next_token = next(self)
+        assert len(args) != 0
 
         alternative = 0
         for arg in args:
@@ -45,7 +47,9 @@ class TokenStream:
         return result[0]
 
     def expect(self, *args) -> tuple[Token, int]:
-        return self.match(*args, force=True)
+        match = self.match(*args, force=True)
+        assert match is not None
+        return match
 
     def expect_one(self, **kwargs) -> Token:
         return self.expect(kwargs)[0]
@@ -62,67 +66,55 @@ class ParsingError(Exception):
 
 class AbstractTreeNode(ABC):
     def __init__(self) -> None:
-        self.parent = None
+        self.parent: AbstractTreeNode | None = None
+        self.child_nodes: list[AbstractTreeNode] = []
 
     def add_child(self, child: AbstractTreeNode) -> AbstractTreeNode | None:
         child.parent = self
+        self.child_nodes.append(child)
         return child
 
     def __repr__(self):
-        return f"{type(self).__name__}:{repr_dict(self.__dict__)}"
+        return f"{type(self).__name__}:{repr_dict(dict(self.__dict__))}"
 
     @classmethod
     @abstractmethod
     def from_token_stream(cls, stream: TokenStream) -> AbstractTreeNode:
         raise NotImplementedError()
 
+class IdenifiableAbstractTreeNode(AbstractTreeNode):
+    def __init__(self, name) -> None:
+        super().__init__()
+        self.identifier = name
 
-class AbstractSyntaxTree(AbstractTreeNode):
+    def add_to_scope(self):
+        assert self.parent is not None
+        par: AbstractTreeNode = self.parent
+        while not isinstance(par, HasScope):
+            assert par.parent is not None
+            par = par.parent
+
+class HasScope:
+    def __init__(self) -> None:
+        self.in_scope: dict[str, IdenifiableAbstractTreeNode] = {}
+    
+    def add_to_scope(self, identifiable: Idenifiable):
+        assert identifiable.identifier is not None
+        self.in_scope[identifiable.identifier] = identifiable
+
+
+class AbstractSyntaxTree(AbstractTreeNode, HasScope):
     def __init__(self, entrypoint: str="main") -> None:
         super().__init__()
-        self.functions: dict[str, Function] = {}
         self.entrypoint = entrypoint
-
-    def add_func(self, func: Function) -> None:
-        self.add_child(func)
-        self.functions[func.name] = func
 
     @classmethod
     def from_token_stream(cls, stream: TokenStream) -> AbstractSyntaxTree:
         new = cls()
         while not stream.is_empty():
-            next_token, alternative = stream.expect({"token_type": TokenType.KEYWORD, "subtype": KeywordType.FUNCTION},
-                                                    {"token_type": TokenType.HASHTAG})
-            match alternative:
-                case 0:
-                    new.add_func(Function.from_token_stream(stream))
-                case 1:
-                    compiler_annotation = stream.expect({"token_type": TokenType.IDENTIFIER})[0]
-                    # Do something ...
+            statement = Statement.from_token_stream(stream)
 
         return new
-
-class Function(AbstractTreeNode):
-    def __init__(self, name: str, statement: Statement, arguments: list[str]) -> None:
-        super().__init__()
-        self.name = name
-        self.statement = statement
-        self.arguments = arguments
-        self.add_child(statement)
-
-    @classmethod
-    def from_token_stream(cls, stream: TokenStream) -> Function:
-        identifier = stream.expect_one(token_type=TokenType.IDENTIFIER)
-        stream.expect_one(token_type=TokenType.OPENING_PARENTHESIS)
-        args = []
-
-        while not stream.match_one(token_type=TokenType.CLOSING_PARENTHESIS):
-            args.append(stream.expect_one(token_type=TokenType.IDENTIFIER))
-            stream.match_one(token_type=TokenType.COMMA)
-        statement = Statement.from_token_stream(stream)
-
-        return cls(identifier.value, statement, args)
-
 
 class Statement(AbstractTreeNode):
     def __init__(self):
@@ -132,11 +124,28 @@ class Statement(AbstractTreeNode):
     @classmethod
     def from_token_stream(cls, stream: TokenStream) -> Statement:
         identifier, alternative = stream.expect({"token_type": TokenType.OPENING_CURLY_BRACKET},
-                                           {"token_type": TokenType.IDENTIFIER})
+                                                {"token_type": TokenType.KEYWORD, "subtype": KeywordType.IF},
+                                                {"token_type": TokenType.KEYWORD, "subtype": KeywordType.RETURN},
+                                                {"token_type": TokenType.KEYWORD, "subtype": KeywordType.WHILE},
+                                                {"token_type": TokenType.IDENTIFIER})
         match alternative:
             case 0: # `{`
                 return CompoundStatement.from_token_stream(stream)
-            case 1: # <identifier>
+            case 1: # if
+                stream.expect_one(token_type=TokenType.OPENING_PARENTHESIS)
+                expression = Expression.from_token_stream(stream)
+                stream.expect_one(token_type=TokenType.CLOSING_PARENTHESIS)
+                if_body = Statement.from_token_stream(stream)
+                else_body = None
+
+                if stream.match_one(token_type=TokenType.KEYWORD, subtype=KeywordType.ELSE):
+                    else_body = Statement.from_token_stream(stream)
+
+            case 2: # return
+                stream.expect_one(token_type=TokenType.SEMICOLON)
+            case 3: # while
+                stream.expect_one(token_type=TokenType.OPENING_PARENTHESIS)
+            case 4: # <identifier>
                 token, alternative = stream.expect({"token_type": TokenType.OPENING_PARENTHESIS},
                                                    {"token_type": TokenType.OPERAND, "subtype": OperandType.EQUALITY})
                 match alternative:
@@ -154,7 +163,7 @@ class Statement(AbstractTreeNode):
         raise ParsingError(f"Unexpected parsing error")
 
 
-class CompoundStatement(Statement):
+class CompoundStatement(Statement, HasScope):
     def __init__(self, statements: list[Statement]) -> None:
         super().__init__()
         self.statements = statements
@@ -181,6 +190,54 @@ class CallStatement(Statement):
         self.function = function
         self.arguments = arguments
 
+class ConditionalStatement(Statement):
+    def __init__(self, if_body: Statement, else_body: Statement | None):
+        super().__init__()
+        self.if_body = if_body
+        self.else_body = else_body
+        self.add_child(if_body)
+        if else_body is not None:
+            self.add_child(else_body)
+
+
+class FunctionStatement(Statement, Idenifiable):
+    def __init__(self, name: str, statement: Statement, arguments: list[str]) -> None:
+        super(Statement, self).__init__()
+        super(Idenifiable, self).__init__(name)
+        
+        self.statement = statement
+        self.arguments = arguments
+        self.add_child(statement)
+
+    @classmethod
+    def from_token_stream(cls, stream: TokenStream) -> FunctionStatement:
+        identifier = stream.expect_one(token_type=TokenType.IDENTIFIER)
+        stream.expect_one(token_type=TokenType.OPENING_PARENTHESIS)
+        args = []
+
+        while not stream.match_one(token_type=TokenType.CLOSING_PARENTHESIS):
+            args.append(stream.expect_one(token_type=TokenType.IDENTIFIER))
+            stream.match_one(token_type=TokenType.COMMA)
+        statement = Statement.from_token_stream(stream)
+
+        return cls(identifier.value, statement, args)
+
+
+
+class ConditionType(Enum):
+    EQUALITY = auto()
+    NOT_EQUALITY = auto()
+
+    GREATER_THAN = auto()
+    LESS_THAN = auto()
+    GREATER_THAN_OR_EQUAL = auto()
+    LESS_THAN_OR_EQUAL = auto()
+
+
+class Condition(AbstractTreeNode):
+    def __init__(self) -> None:
+        super().__init__()
+
 
 
 class Expression(AbstractTreeNode):
@@ -199,6 +256,8 @@ class Expression(AbstractTreeNode):
                 a = Literal(token.subtype, token.value)
             case 1: # Identifier
                 a = Variable(token.value)
+        assert a is not None
+
 
         operand = stream.match_one(token_type=TokenType.OPERAND)
         if operand:

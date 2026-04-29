@@ -1,3 +1,5 @@
+from typing import Any
+
 def indent(text: str):
     lines = text.splitlines()
     lines = ["\t" + line for line in lines]
@@ -18,7 +20,7 @@ def repr_iterable(obj):
         vals.append(repr_object(val))
     return "\n" + indent("\n".join(vals))
 
-def repr_dict(obj: dict):
+def repr_dict(obj: dict[Any, Any]):
     if not obj: return "<empty>"
 
     vals = []
