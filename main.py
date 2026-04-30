@@ -4,7 +4,7 @@ import logging
 
 from src.assembler.assembler import Assembler
 from src.simulator import JPU
-from src.compiler.compiler import compile
+#from src.compiler.compiler import compile
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='[%(levelname)s]: %(message)s', level=logging.INFO)
