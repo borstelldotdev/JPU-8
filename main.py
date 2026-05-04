@@ -4,6 +4,7 @@ import logging
 
 from src.assembler.assembler import Assembler
 from src.simulator import JPU
+#from src.compiler.compiler import compile
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='[%(levelname)s]: %(message)s', level=logging.INFO)
@@ -35,7 +36,10 @@ if __name__ == "__main__":
         print(f"JPU-8 compiler, assembler and simulator version {VERSION}")
         print(f"Usage: python[3] {script} [options] input_file")
         print(f"Use `python[3] {script} --help` for more information")
-        exit(0)
+        try:
+            arguments = input("Enter a subcommand (Ctr + C to exit): ").split()
+        except KeyboardInterrupt:
+            exit(0)
 
 
     # Parse arguments
@@ -66,11 +70,8 @@ if __name__ == "__main__":
                     tasks.append(ParseableItems.RUN)
                     debug = True
 
-                # Not implemented yet
                 case "-c" | "--compile":
-                    # TODO: Implement compiler
                     tasks.append(ParseableItems.COMPILE)
-                    raise NotImplementedError()
 
                 case "-l" | "--log" | "--log-file":
                     to_parse.insert(0, ParseableItems.LOG_FILE)
@@ -132,8 +133,15 @@ if __name__ == "__main__":
 
     logger.info(f"Found {len(tasks)} tasks")
 
+    
     for task in tasks:
         match task:
+            case ParseableItems.COMPILE:
+                logger.info(" - Compiling...")
+                assert current is not None
+                current = compile(current)
+                logger.debug("  Done compiling")
+
             case ParseableItems.ASSEMBLE:
                 logger.info(" - Assembling...")
                 asm = Assembler(current, logger)

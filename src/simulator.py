@@ -8,9 +8,10 @@ from array import array
 class Instruction:
     def __init__(self, instruction_a: c_uint8, instruction_b: c_uint8,
                  im_a=c_uint8(0), im_b=c_uint8(0)):
-        self.instruction_b = instruction_b
-        self.im_a = im_a
-        self.im_b = im_b
+        self.instruction_a: c_uint8 = instruction_a
+        self.instruction_b: c_uint8 = instruction_b
+        self.im_a: c_uint8 = im_a
+        self.im_b: c_uint8 = im_b
 
     def get_pair(self, flag: bool) -> tuple[c_uint8, c_uint8]:
         if flag:
@@ -28,7 +29,9 @@ class Instruction:
         return new
 
     def __repr__(self):
-        pass
+        return f"Instrunction({bin(self.instruction_a.value)}{str(self.im_a)})" \
+        + ("" if (self.instruction_a.value == self.instruction_b.value and self.im_a.value == self.im_b.value)
+            else "Instrunction({bin(self.instruction_a.value)}{str(self.im_a)})")
 
 class SupportsValueReadWrite(ABC):
     @property
@@ -55,18 +58,19 @@ class Register(SupportsValueReadWrite):
         self.val.value = val & 0xFF
 
 class Memory(SupportsValueReadWrite):
-    def __init__(self):
+    def __init__(self, MAR: Register):
         super().__init__()
         self.val = array("B", [0] * 256)
-        self.addr = c_uint8(0)
+        # Memory address register (XI)
+        self.MAR = MAR
 
     @property
     def value(self):
-        return self.val[self.addr.value] & 0xFF
+        return self.val[self.MAR.value] & 0xFF
 
     @value.setter
     def value(self, val):
-        self.val[self.addr.value] = val & 0xFF
+        self.val[self.MAR.value] = val & 0xFF
 
 class ExpansionPort(SupportsValueReadWrite):
     def __init__(self):
@@ -131,12 +135,14 @@ class JPU:
                     raise SystemExit
                 case ".step":
                     self.instance.step()
+                    return True
                 case ".dump":
                     for reg in self.instance.registers.keys():
                         print(f"{reg}: {self.instance.registers[reg].value}")
                     print("Flag:", self.instance.flag)
+                    return True
                 case _:
-                    super().runsource(source, filename=filename, symbol=symbol)
+                    return super().runsource(source, filename=filename, symbol=symbol)
 
 
     def __init__(self, code: list[Instruction], logger: logging.Logger):
@@ -148,23 +154,18 @@ class JPU:
         self.debug_mode = False
         self.logger = logger
 
-        self.registers: dict[str, SupportsValueReadWrite] = {
-            "A": Register(),
-            "B": Register(),
-            "C": Register(),
-            "D": Register(),
-            "XI": Register(),
-            "YI": Register(),
-            "ZO": Register(),
-            "IM": Register(),
-            "MEM": Memory(),
-            "PC": Register(),
-        }
-
-        for key in self.registers.keys():
-            self.__setattr__(key, self.registers[key])
+        self.A = Register()
+        self.B = Register()
+        self.C = Register()
+        self.D = Register()
+        self.XI = Register()
+        self.YI = Register()
+        self.ZO = Register()
+        self.IM = Register()
+        self.PC = Register()
 
         self.EX = ExpansionPort()
+        self.MEM = Memory(self.XI) # XI: memory address register
 
         self.read = {
             0b000: self.A,
@@ -231,13 +232,6 @@ class JPU:
                 from_reg = self.read[from_]
                 to_reg = self.write[to_]
 
-                # Sätt minnesadress
-                if type(from_reg) == Memory:
-                    from_reg.addr.value = self.IM.value
-
-                if type(to_reg) == Memory:
-                    to_reg.addr.value = self.IM.value
-
                 to_reg.value = from_reg.value
 
             case 0b01:
@@ -294,43 +288,10 @@ class JPU:
                                 return
 
                         input("Press enter to continue... ")
-                    case 0b000010:
-                        pass
-                    case 0b000011:
-                        pass
-                    case 0b000100:
-                        pass
-                    case 0b001100:
-                        pass
-                    case 0b010100:
-                        pass
-                    case 0b011100:
-                        pass
-                    case 0b100100:
-                        pass
+                    
                     case 0b101100:
-                        pass
-                    case 0b110100:
-                        pass
-                    case 0b111100:
-                        pass
-                    case 0b000100:
-                        pass
-                    case 0b001100:
-                        pass
-                    case 0b010100:
-                        pass
-                    case 0b011100:
-                        pass
-                    case 0b100100:
-                        pass
-                    case 0b101100:
-                        pass
-                    case 0b110100:
-                        pass
-                    case 0b111100:
-                        pass
-                    case 0b111101:
+                        self.PC = self.IM
+
                         # Set device
                         self.EX.mode.value = self.IM.value
                     case 0b111111:

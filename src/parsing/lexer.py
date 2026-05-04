@@ -1,4 +1,4 @@
-from src.compiler.tokens import *
+from parsing.tokens import *
 
 class Lexer:
     token_map = {
@@ -11,6 +11,7 @@ class Lexer:
         ";": (TokenType.SEMICOLON,),
         "#": (TokenType.HASHTAG,),
         ",": (TokenType.COMMA,),
+        ".": (TokenType.DOT,),
 
         "+": (TokenType.OPERAND, OperandType.PLUS),
         "-": (TokenType.OPERAND, OperandType.MINUS),
@@ -30,14 +31,18 @@ class Lexer:
         "else": (TokenType.KEYWORD, KeywordType.ELSE),
         "func": (TokenType.KEYWORD, KeywordType.FUNCTION),
         "return": (TokenType.KEYWORD, KeywordType.RETURN),
-        "goto": (TokenType.KEYWORD, KeywordType.GOTO),
         "while": (TokenType.KEYWORD, KeywordType.WHILE),
         "type": (TokenType.KEYWORD, KeywordType.TYPE),
+
+        "define": (TokenType.KEYWORD, KeywordType.CN_DEFINE),
+        "define": (TokenType.KEYWORD, KeywordType.CN_DEFINE),
+        "define": (TokenType.KEYWORD, KeywordType.CN_DEFINE),
+        "define": (TokenType.KEYWORD, KeywordType.CN_DEFINE),
     }
 
     delimiters = [" ", "\n", "\t"]
     pseudo_delimiters = ["(", ")", "[", "]", "{", "}", ";", "+", "-", "*", "&", "|", "^", "~",
-                         "=", ">", "<", "!", "/", ","]
+                         "=", ">", "<", "!", "/", ",", "."]
     string_delimiters = ["\"", "\'"]
 
     @staticmethod
@@ -89,8 +94,11 @@ class Lexer:
                     continue
 
                 if accumulator and not inside_string:
-                    tokens.append(Lexer.attempt_tokenization(accumulator, line, column, force=True))
+                    token = Lexer.attempt_tokenization(accumulator, line, column, force=True)
+                    assert token is not None
+                    tokens.append(token)
                     accumulator = ""
+                
                 if current_char == "\n":
                     line += 1
                     column = 0

@@ -91,7 +91,7 @@ class Instruction:
 
 
 class Assembler:
-    BASE_LIB_PATH = "./lib/"
+    BASE_LIB_PATH = "./src/assembler/lib/"
 
     def __init__(self, code: str, logger: logging.Logger):
         self.code = code
