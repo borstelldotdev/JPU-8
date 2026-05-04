@@ -17,6 +17,7 @@ class TokenType(Enum):
     SEMICOLON = auto()
     HASHTAG = auto()
     COMMA = auto()
+    DOT = auto()
 
 class OperandType(Enum):
     PLUS = auto()
@@ -40,6 +41,11 @@ class KeywordType(Enum):
     TYPE = auto()
     FUNCTION = auto()
     RETURN = auto()
+
+    CN_DEFINE = auto()
+    CN_MACRO = auto()
+    CN_ENTRYPOINT = auto()
+    CN_SETUPPOINT = auto()
 
 class LiteralType(Enum):
     STRING = auto()

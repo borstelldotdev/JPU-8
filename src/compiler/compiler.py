@@ -1,4 +1,4 @@
-from src.compiler.lexer import Lexer
+from parsing.lexer import Lexer
 from src.compiler.parser import parse
 from compiler.ast_optimizer import *
 
