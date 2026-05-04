@@ -1,4 +1,4 @@
-from parsing.tokens import *
+from src.parsing.tokens import *
 
 class Lexer:
     token_map = {
@@ -35,9 +35,9 @@ class Lexer:
         "type": (TokenType.KEYWORD, KeywordType.TYPE),
 
         "define": (TokenType.KEYWORD, KeywordType.CN_DEFINE),
-        "define": (TokenType.KEYWORD, KeywordType.CN_DEFINE),
-        "define": (TokenType.KEYWORD, KeywordType.CN_DEFINE),
-        "define": (TokenType.KEYWORD, KeywordType.CN_DEFINE),
+        "macro": (TokenType.KEYWORD, KeywordType.CN_MACRO),
+        "entrypoint": (TokenType.KEYWORD, KeywordType.CN_ENTRYPOINT),
+        "setup-point": (TokenType.KEYWORD, KeywordType.CN_SETUPPOINT),
     }
 
     delimiters = [" ", "\n", "\t"]
